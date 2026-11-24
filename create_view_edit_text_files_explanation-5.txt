@@ -1,0 +1,642 @@
+LAB: CREATE, VIEW, AND EDIT TEXT FILES
+======================================
+
+PURPOSE OF THE LAB
+------------------
+This Red Hat Enterprise Linux (RHEL) lab teaches you how to:
+1. Create a text file using shell commands.
+2. View and edit a file with the Vim text editor.
+3. Use Vim Visual, Visual Line, and Visual Block modes.
+4. Copy a file to create a backup.
+5. Append text and command output to a file.
+6. Verify the final file and grade the exercise.
+
+The main focus is Vim's three visual selection modes:
+- v       : Visual character mode; selects individual characters.
+- V       : Visual Line mode; selects complete lines.
+- Ctrl+V  : Visual Block mode; selects a rectangular block or column.
+
+IMPORTANT: Perform this lab as the student user on the workstation machine.
+The commands lab start, lab grade, and lab finish are provided by the Red Hat
+training environment. They are not standard commands on every Linux system.
+
+
+1. START THE LAB
+----------------
+Command:
+    lab start edit-review
+
+Meaning:
+- lab is the training environment's lab-management command.
+- start prepares the exercise environment.
+- edit-review is the name of this exercise.
+
+The command prepares the files and resources needed for the lab.
+
+A prompt such as:
+    [student@workstation ~]$
+
+means:
+- student     : the current username.
+- workstation: the computer or machine name.
+- ~           : the current directory is the student's home directory.
+- $           : the shell prompt for a normal (non-root) user.
+
+Do not type the prompt itself. Type only the command after the $ sign.
+
+
+2. CREATE A SHELL VARIABLE
+--------------------------
+Command:
+    lab_file=editing_final_lab.txt
+
+A variable stores a value so that you can reuse it in commands.
+
+In this command:
+- lab_file is the variable name.
+- = assigns a value to the variable.
+- editing_final_lab.txt is the value.
+
+To display the variable's value, use:
+    echo $lab_file
+
+Expected output:
+    editing_final_lab.txt
+
+The dollar sign ($) tells the shell to substitute the variable with its value.
+For example:
+    vim $lab_file
+
+is equivalent to:
+    vim editing_final_lab.txt
+
+Important: Do not put spaces around the equals sign when assigning a shell
+variable.
+Correct:
+    lab_file=editing_final_lab.txt
+Incorrect:
+    lab_file = editing_final_lab.txt
+
+
+3. LIST THE HOME DIRECTORY AND REDIRECT THE OUTPUT TO A FILE
+------------------------------------------------------------
+Command:
+    ls -al > $lab_file
+
+Meaning of ls:
+- ls lists the contents of a directory.
+
+Meaning of the options:
+- -a displays all entries, including hidden files.
+- -l displays a detailed, long-list format.
+- -al combines both options.
+
+In Linux, a filename beginning with a dot (.) is usually hidden. Examples:
+    .bashrc
+    .bash_profile
+    .cache
+    .ssh
+
+The long listing normally contains information such as:
+- file type and permissions
+- number of hard links
+- owner
+- group
+- file size
+- modification date and time or year
+- filename
+
+Meaning of the > operator:
+- > redirects standard output into a file.
+- If the file does not exist, it is created.
+- If the file already exists, its previous contents are overwritten.
+
+Therefore:
+    ls -al > $lab_file
+
+is equivalent to:
+    ls -al > editing_final_lab.txt
+
+The listing is written into editing_final_lab.txt instead of being printed
+normally in the terminal.
+
+NOTE: Because the file is created before the listing command finishes, the
+listing can include editing_final_lab.txt itself.
+
+
+4. OPEN THE FILE IN VIM
+-----------------------
+Command:
+    vim $lab_file
+
+This opens editing_final_lab.txt in Vim.
+
+Vim is a text editor that runs in a terminal. It uses different modes for
+inserting text, navigating, selecting, and editing.
+
+IMPORTANT VIM MODES
+
+A. Normal mode
+   - This is the mode Vim normally opens in.
+   - Use it to navigate and run editing commands.
+   - Examples:
+       x   : delete the character under the cursor, or delete selected text
+       dd  : delete the current line
+       yy  : copy the current line
+       p   : paste after the cursor/current line
+
+B. Insert mode
+   - Used to type or insert text.
+   - Press i in Normal mode to enter Insert mode.
+   - Press Esc to return to Normal mode.
+
+C. Visual modes
+   - Used to select text before applying an operation.
+   - There are three visual selection types:
+       v       : select characters
+       V       : select complete lines
+       Ctrl+V  : select a rectangular block of text
+
+The lab mainly uses Visual modes to remove selected portions of the listing.
+
+
+5. REMOVE THE FIRST THREE LINES USING VISUAL LINE MODE
+------------------------------------------------------
+Task:
+Remove the first three lines of the file.
+
+The first lines of an ls -al listing commonly contain:
+1. The total block-usage line (for example, total 48).
+2. The current directory entry, represented by a single dot (.).
+3. The parent directory entry, represented by two dots (..).
+
+Steps in Vim:
+1. Make sure Vim is in Normal mode. Press Esc if necessary.
+2. Use the arrow keys to move to the first character of the first line.
+3. Press Shift+V (uppercase V) to enter Visual Line mode.
+4. Press the Down Arrow twice. The first three complete lines should now be
+   selected.
+5. Press x to delete the selected lines.
+
+Why use V?
+- V selects complete lines, not just individual characters.
+- Moving down extends the selection to more complete lines.
+
+Remember:
+    V + Down Arrow twice + x
+
+
+6. KEEP ONLY THE FIRST FOUR CHARACTERS OF THE FIRST PERMISSIONS FIELD
+-----------------------------------------------------------------------
+Task:
+On the first remaining line, remove the characters after the first four
+characters of the first column. Preserve only the first four characters.
+
+The first field in a long ls listing contains the file type and permissions.
+Example:
+    drwxr-xr-x.
+
+For a directory, the first four characters might be:
+    drwx
+
+The task is to preserve those first four characters and delete the rest of
+that first field.
+
+Steps in Vim:
+1. Move the cursor to the fifth character of the first field on the first
+   remaining line.
+2. Press lowercase v to enter Visual character mode.
+3. Move right until the last character of that first field is selected.
+4. Press x to delete the selected characters.
+
+The first field should now retain only its first four characters. For example:
+    Before: drwxr-xr-x.
+    After:  drwx
+
+Why use v?
+- v selects individual characters.
+- This operation is being performed on one line, so character selection is
+  suitable.
+
+
+7. KEEP ONLY THE FIRST FOUR CHARACTERS OF THE FIRST FIELD ON THE OTHER LINES
+-----------------------------------------------------------------------------
+Task:
+Repeat the previous operation for the second through the last line.
+
+This time use Visual Block mode because the same character positions must be
+selected on multiple lines.
+
+Steps in Vim:
+1. Move the cursor to the fifth character of the first field on the second
+   line.
+2. Press Ctrl+V to enter Visual Block mode.
+3. Move down to the last line of the file.
+4. Extend the selection right to the last character of the first field.
+5. Press x to delete the selected rectangular block.
+
+The first four characters of the first field should remain on every line.
+For example:
+    Before: -rw-r--r--.
+    After:  -rw-
+
+Why use Ctrl+V?
+- Visual Block mode selects a rectangle across multiple lines.
+- It is useful when editing the same column positions in several rows.
+
+
+8. REMOVE THE FOURTH FIELD/COLUMN
+---------------------------------
+Task:
+Remove the fourth column of the listing.
+
+A typical ls -al long listing has fields similar to these:
+1. Permissions
+2. Number of links
+3. Owner
+4. Group
+5. File size
+6. Month
+7. Day
+8. Time or year
+9. Filename
+
+Example before removing the group field:
+    drwx  2 student student 4096 Mar 8  Documents
+                      ^^^^^^^
+                      group field
+
+The fourth field is the group name. The lab asks you to remove it.
+
+Steps in Vim:
+1. Identify the first character of the fourth field in the first row.
+2. Move the cursor to that character.
+3. Press Ctrl+V to enter Visual Block mode.
+4. Move down to the last row, keeping the selection in the same field.
+5. Extend the selection across the complete fourth field.
+6. Press x to delete it.
+
+Important:
+- Use the actual positions visible in your Vim screen.
+- Previous editing steps change the layout, so do not assume the character
+  positions are identical to the original listing.
+
+
+9. REMOVE THE TIME OR YEAR PART OF THE MODIFICATION DATE
+--------------------------------------------------------
+Task:
+Keep only month and day information. Remove the time or year information.
+
+A long ls listing displays a modification date. Depending on how recently a
+file was modified, the date portion commonly looks like one of these:
+    Mar 8 12:30
+or:
+    Mar 8 2026
+
+The required information to preserve is:
+    Mar 8
+
+The time or year portion must be removed.
+
+After the group field has been removed, the time/year information is the
+current seventh field in the listing. The assignment refers to the current
+seventh column because the earlier removal of the group field shifted the
+field positions.
+
+Steps in Vim:
+1. Inspect the edited listing and identify the current seventh field, which
+   contains the time or year part of the modification date.
+2. Move the cursor to the first character of that field.
+3. Press Ctrl+V to enter Visual Block mode.
+4. Extend the selection down to the same field on the last row.
+5. Select the complete time/year field as shown in the lab instructions.
+6. Press x to delete it.
+
+The month and day should remain. For example:
+    Before: Mar 8 12:30
+    After:  Mar 8
+
+Pay attention to the current layout in Vim. The previous step changed the
+columns, so use the visible file rather than counting from the unedited list.
+
+
+10. REMOVE THE DESKTOP AND PUBLIC ROWS USING VISUAL LINE MODE
+-------------------------------------------------------------
+Task:
+Delete the complete rows containing the strings Desktop and Public.
+
+Steps for the Desktop row:
+1. Find the line containing Desktop.
+2. Move the cursor anywhere on that line.
+3. Press uppercase V (Shift+V) to select the complete line.
+4. Press x to delete the selected line.
+
+Repeat the same steps for the line containing Public.
+
+Why use V?
+- The task requires removing complete rows.
+- Visual Line mode selects the entire line, including its text.
+
+After this step, the listing should not contain rows named Desktop or Public.
+
+
+11. SAVE THE FILE AND EXIT VIM
+------------------------------
+First press:
+    Esc
+
+This returns Vim to Normal mode.
+
+Then type:
+    :wq
+
+Press Enter.
+
+Meaning:
+- : opens Vim's command-line mode.
+- w means write (save) the file.
+- q means quit Vim.
+
+Useful Vim save and exit commands:
+    :w   Save the file without exiting.
+    :q   Exit Vim if there are no unsaved changes.
+    :q!  Exit without saving changes.
+    :wq  Save changes and exit.
+
+
+12. CREATE A BACKUP WITH A UNIX TIMESTAMP IN ITS NAME
+-----------------------------------------------------
+Command:
+    cp $lab_file editing_final_lab_$(date +%s).txt
+
+Meaning of cp:
+- cp is the Linux file-copy command.
+- General syntax:
+      cp source destination
+
+In this lab:
+- Source: editing_final_lab.txt (the value of $lab_file).
+- Destination: editing_final_lab_ followed by the current Unix timestamp,
+  followed by .txt.
+
+Meaning of date:
+- date displays date and time information.
+
+Meaning of +%s:
+- +%s formats the date command's output as a Unix timestamp in seconds.
+- A Unix timestamp counts seconds from 1 January 1970 UTC.
+
+Meaning of $(...):
+- This is command substitution.
+- The shell runs the command inside the parentheses and substitutes its
+  output into the command line.
+
+For example:
+    echo "The time is $(date)"
+
+The backup filename will look similar to:
+    editing_final_lab_1795431000.txt
+
+The number will be different when you run the command. The timestamp helps
+make the backup filename unique.
+
+The cp command creates a separate copy. It does not remove or rename the
+original editing_final_lab.txt file.
+
+
+13. APPEND A LINE CONTAINING EXACTLY 12 DASHES
+----------------------------------------------
+Command:
+    echo "------------" >> $lab_file
+
+Meaning of echo:
+- echo prints text.
+
+The quoted text contains exactly twelve dash characters:
+    ------------
+
+Meaning of >>:
+- >> appends output to the end of a file.
+- It does not erase the file's existing contents.
+- If the destination file does not exist, the shell creates it.
+
+In this assignment, the twelve-dash line is added to the bottom of
+editing_final_lab.txt.
+
+Difference between > and >>:
+    >   creates a file or overwrites its existing contents.
+    >>  appends output to the end of a file.
+
+The exact number of dashes matters because the lab grader checks for twelve.
+
+
+14. LIST THE DOCUMENTS DIRECTORY AND APPEND THE OUTPUT USING tee
+----------------------------------------------------------------
+Command:
+    ls Documents/ | tee -a $lab_file
+
+This command combines ls, the pipe operator, and tee.
+
+A. ls Documents/
+   - Lists the contents of the Documents directory.
+   - The trailing slash indicates that Documents is a directory.
+
+B. Pipe operator: |
+   - Sends the standard output of the command on its left to the command on
+     its right.
+   - Example:
+         ls | wc -l
+     The output from ls is passed to wc -l, which counts lines.
+
+C. tee
+   - Reads input and sends it both to the terminal and to a file.
+   - The -a option means append.
+
+Therefore:
+    ls Documents/ | tee -a $lab_file
+
+has two results:
+1. The names inside Documents are displayed in the terminal.
+2. The same output is appended to editing_final_lab.txt.
+
+For example, the terminal might display:
+    lab_review.txt
+
+That same line is also added to the end of the lab file.
+
+Difference between tee and tee -a:
+    tee file.txt     writes to file.txt and normally overwrites it.
+    tee -a file.txt  appends output to file.txt.
+
+
+15. DISPLAY THE FINAL FILE TO VERIFY IT
+---------------------------------------
+Command:
+    cat $lab_file
+
+Meaning of cat:
+- cat displays the contents of a file in the terminal.
+- Here it displays editing_final_lab.txt.
+
+Check the output carefully. The edited directory listing should appear first.
+At the bottom, the file should contain:
+    ------------
+    lab_review.txt
+
+The exact Documents listing depends on the contents of your Documents
+ directory. The important requirement is that its output appears at the bottom
+of the lab file, after the twelve-dash line.
+
+Use cat to confirm that:
+- The first three lines were removed.
+- Only the first four characters of each permissions field remain.
+- The fourth field/group information was removed.
+- The time/year portion was removed, leaving month and day.
+- The Desktop and Public rows were removed.
+- The twelve-dash line was appended.
+- The Documents directory listing was appended after the dashed line.
+
+
+16. GRADE THE LAB
+-----------------
+Command:
+    lab grade edit-review
+
+This asks the Red Hat training environment to check your work against the
+exercise requirements.
+
+If the grader reports a failure:
+1. Read the reported failure carefully.
+2. Identify which step needs correction.
+3. Reopen and correct the file if necessary.
+4. Run the grading command again.
+
+Do not assume the lab is complete until the grader reports success.
+
+
+17. FINISH THE LAB
+------------------
+Command:
+    lab finish edit-review
+
+This tells the training environment that you have finished the exercise and
+performs the lab's cleanup procedure.
+
+Run it as the student user from the workstation machine, as instructed.
+Finishing the lab helps prevent resources from this exercise from affecting
+later exercises.
+
+
+QUICK REFERENCE: LINUX COMMANDS
+===============================
+
+Command                         Purpose
+-------                         -------
+lab start edit-review            Prepare the lab environment.
+ls                               List directory contents.
+ls -a                            Include hidden files and directories.
+ls -l                            Show detailed file information.
+ls -al                           Show all entries in long format.
+vim file.txt                     Open a file in Vim.
+echo "text"                      Print text.
+cp source destination            Copy a file.
+date                             Display date and time.
+date +%s                         Display Unix timestamp in seconds.
+cat file.txt                     Display file contents.
+tee file.txt                     Display input and write it to a file.
+tee -a file.txt                  Display input and append it to a file.
+lab grade edit-review            Grade the exercise.
+lab finish edit-review           Finish and clean up the exercise.
+
+
+QUICK REFERENCE: SHELL OPERATORS
+================================
+
+Symbol                          Meaning
+------                          -------
+>                               Redirect output; overwrite destination.
+>>                              Redirect output; append to destination.
+|                               Pipe output from one command to another.
+$variable                       Expand the value of a shell variable.
+$(command)                      Run a command and substitute its output.
+=                               Assign a value to a shell variable (no spaces).
+
+
+QUICK REFERENCE: VIM KEYS
+=========================
+
+Key                             Purpose
+---                             -------
+Esc                             Return to Normal mode.
+i                               Enter Insert mode.
+v                               Enter Visual character mode.
+V (Shift+v)                     Enter Visual Line mode.
+Ctrl+V                          Enter Visual Block mode.
+x                               Delete the selected text/character.
+Arrow keys                      Move the cursor and extend selections.
+:w                              Save the file.
+:q                              Quit Vim if there are no unsaved changes.
+:q!                             Quit without saving changes.
+:wq                             Save and quit Vim.
+
+Easy way to remember the three visual modes:
+- v      = characters.
+- V      = complete lines.
+- Ctrl+V = rectangular blocks/columns.
+
+
+COMPLETE TERMINAL COMMAND SEQUENCE
+==================================
+
+Run these commands in order. The Vim editing steps between opening and
+saving the file must be performed manually inside Vim.
+
+    lab start edit-review
+
+    lab_file=editing_final_lab.txt
+
+    ls -al > $lab_file
+
+    vim $lab_file
+
+Inside Vim, complete the required edits:
+- Delete the first three lines using Visual Line mode (V).
+- Preserve only the first four characters of the first field on line one
+  using Visual character mode (v).
+- Do the same from line two to the last line using Visual Block mode
+  (Ctrl+V).
+- Remove the fourth field using Visual Block mode (Ctrl+V).
+- Remove the time/year field so only month and day remain, using Visual
+  Block mode (Ctrl+V).
+- Delete the Desktop and Public rows using Visual Line mode (V).
+- Save and exit with :wq.
+
+Back at the shell prompt, run:
+
+    cp $lab_file editing_final_lab_$(date +%s).txt
+
+    echo "------------" >> $lab_file
+
+    ls Documents/ | tee -a $lab_file
+
+    cat $lab_file
+
+    lab grade edit-review
+
+    lab finish edit-review
+
+
+FINAL PRACTICAL NOTES
+=====================
+1. Run the lab commands on the RHEL workstation, not in ordinary Windows
+   PowerShell. Git Bash or another shell may not provide the Red Hat lab
+   command or the same lab environment.
+2. The shell variable lab_file exists only in the current shell session.
+   Define it again if you open a new terminal session.
+3. In Vim, press Esc before entering a new Normal-mode or Visual-mode command.
+4. Use the current screen layout when selecting columns. Earlier deletions
+   change the positions of later fields.
+5. Use >> when the assignment says append. Using > at that stage could erase
+   the file's existing contents.
+6. Check that the dashed line contains exactly twelve dashes.
+7. Run lab grade edit-review and correct any failures before finishing.

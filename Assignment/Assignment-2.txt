@@ -1,0 +1,37 @@
+lab start files-review                                                                             # Prepares the lab environment and required resources.
+ssh student@serverb                                                                                # Logs into serverb as the student user via SSH.
+mkdir -p ~/Documents/project_plans                                                                 # Creates project_plans (and parent directories if needed).
+touch ~/Documents/project_plans/season{1,2}_project_plan.odf                                       # Creates empty season1 and season2 project plan files.
+touch tv_season{1..2}_episode{1..6}.ogg                                                            # Creates 12 empty TV episode files across 2 seasons and 6 episodes.
+touch mystery_chapter{1..8}.odf                                                                    # Creates 8 empty mystery chapter files (1 through 8).
+mkdir -p Videos/season{1..2}                                                                       # Creates season1 and season2 subdirectories under Videos.
+mv tv_season1* Videos/season1*                                                                     # Moves season 1 episode files into Videos/season1.
+mv tv_season2* Videos/season2*                                                                     # Moves season 2 episode files into Videos/season2.
+mkdir -p Documents/my_bestseller/chapters                                                          # Creates my_bestseller and chapters under Documents.
+mkdir Documents/my_bestseller/{editor,changes,vacation}                                             # Creates editor, changes, and vacation subdirectories.
+cd Documents/my_bestseller/chapters                                                                # Changes into the chapters directory.
+mv ~/mystery_chapter* .                                                                            # Moves all mystery chapter files from ~ into the current directory.
+mv mystery_chapter{1..2}.odf ../editor                                                             # Moves chapters 1 and 2 into the editor directory.
+mv mystery_chapter{7,8}.odf ../vacation                                                            # Moves chapters 7 and 8 into the vacation directory.
+cd ~/Videos/season2                                                                                # Changes into ~/Videos/season2.
+cp *episode1.ogg ~/Documents/my_bestseller/vacation                                                # Copies episode 1 to the vacation directory.
+cd ~/Documents/my_bestseller/vacation                                                              # Changes into the vacation directory.
+cd -                                                                                               # Returns to the previous working directory (season2).
+cp *episode2.ogg ~/Documents/my_bestseller/vacation                                                # Copies episode 2 to the vacation directory.
+cd -                                                                                               # Returns to the previous working directory (vacation).
+cd ~/Documents/my_bestseller                                                                       # Changes into ~/Documents/my_bestseller.
+cp chapters/mystery_chapter[56].odf changes                                                        # Copies chapters 5 and 6 into changes using bracket matching.
+cd changes                                                                                         # Changes into the changes directory.
+cp mystery_chapter5.odf mystery_chapter5_$(date +%F).odf                                           # Copies chapter 5 with today's YYYY-MM-DD date in the filename.
+cp mystery_chapter5.odf mystery_chapter5_$(date +%s).odf                                           # Copies chapter 5 with epoch seconds timestamp in the filename.
+rm mystery*                                                                                        # Removes all mystery* files in the current directory.
+cd ..                                                                                              # Moves up to the parent directory (my_bestseller).
+rm changes                                                                                         # Attempts to remove directory with rm (fails without -r).
+rmdir changes                                                                                      # Removes the now-empty changes directory.
+rm -r vacation                                                                                     # Recursively deletes the vacation directory and its contents.
+cd                                                                                                 # Returns to the student user's home directory.
+mkdir ~/Documents/backups                                                                          # Creates the backups directory under ~/Documents.
+ln ~/Documents/project_plans/season2_project_plan.odf ~/Documents/backups/season2_project_plan.odf.back  # Creates a hard link backup of season2_project_plan.odf.
+exit                                                                                               # Exits the SSH session back to workstation.
+lab grade files-review                                                                             # Grades the lab exercise and reports any issues.
+lab finish files-review                                                                            # Cleans up and completes the lab exercise.

@@ -1,0 +1,10 @@
+lab start edit-review                               # Prepares the lab environment and required resources.
+lab_file=editing_final_lab.txt                      # Assigns the target filename to the lab_file shell variable.
+ls -al > $lab_file                                  # Lists all files (including hidden) with details into $lab_file.
+vim $lab_file                                       # Opens $lab_file in Vim (use Shift+V, v, Ctrl+V, x to edit, then :wq to save/exit).
+cp $lab_file editing_final_lab_$(date +%s).txt      # Creates a backup copy with epoch seconds appended to the filename.
+echo "------------" >> $lab_file                    # Appends a separator line of 12 dashes to $lab_file.
+ls Documents/ | tee -a $lab_file                    # Lists Documents/, appends output to $lab_file, and prints to terminal.
+cat $lab_file                                       # Displays $lab_file to confirm the appended listing at the bottom.
+lab grade edit-review                               # Grades your lab work and reports any failures.
+lab finish edit-review                              # Cleans up and completes the lab exercise.

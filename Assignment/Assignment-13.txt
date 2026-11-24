@@ -1,0 +1,15 @@
+lab start fs-review                                                                   # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                                                    # Logs into serverb as the student user via SSH.
+sudo -i                                                                                # Switches to an interactive root login shell (password: student).
+lsblk -fp /dev/vdb                                                                     # Queries the UUID and filesystem details of /dev/vdb1 (adjust device if different).
+mkdir /mnt/freespace                                                                   # Creates the /mnt/freespace mount point directory.
+mount UUID="44bfb7c8-970c-4d0b-b53d-90ae31cb27ca" /mnt/freespace                       # Mounts the partition by UUID onto /mnt/freespace (use your partition's UUID).
+lsblk -fp /dev/vdb1                                                                    # Verifies that the partition is mounted at /mnt/freespace.
+du /usr/share > /mnt/freespace/results.txt                                             # Saves the disk usage report of /usr/share to results.txt.
+updatedb                                                                               # Updates the mlocate/plocate file search database.
+locate rsyslog.conf > /mnt/freespace/search1.txt                                       # Saves paths matching rsyslog.conf to search1.txt.
+find /usr/share -size +50M -size -100M > /mnt/freespace/search2.txt                    # Finds files in /usr/share between 50 MB and 100 MB and saves to search2.txt.
+exit                                                                                   # Exits the root shell back to student on serverb.
+exit                                                                                   # Closes the SSH session and returns to workstation.
+lab grade fs-review                                                                    # Grades the lab exercise on workstation and reports any failures.
+lab finish fs-review                                                                   # Cleans up and completes the lab exercise on workstation.

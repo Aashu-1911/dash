@@ -1,0 +1,1182 @@
+
+============================================================
+LAB: CONFIGURE AND SECURE SSH
+============================================================
+
+1. AIM OF THE PRACTICAL
+----------------------
+
+Configure and secure the OpenSSH service on serverb.
+
+The main objectives are:
+
+1. Configure SSH key-based authentication.
+2. Prevent direct SSH login as the root user.
+3. Disable password-based SSH authentication for all users.
+4. Verify that users with valid SSH keys can still log in.
+
+Final SSH security configuration:
+
+    PermitRootLogin no
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+
+
+2. IMPORTANT SSH CONCEPTS
+-------------------------
+
+A. What is SSH?
+
+SSH stands for Secure Shell.
+
+It is a network protocol used to securely connect to and
+manage remote computers.
+
+For example:
+
+    ssh student@servera
+
+This command connects to servera using the student account.
+
+SSH provides:
+- Encrypted communication.
+- Secure remote login.
+- Remote command execution.
+- Secure file transfer.
+- Authentication using passwords or SSH keys.
+
+
+B. What is OpenSSH?
+
+OpenSSH is an implementation of the SSH protocol.
+
+It provides tools such as:
+
+    ssh
+    sshd
+    ssh-keygen
+    ssh-copy-id
+    scp
+    sftp
+
+C. Difference between ssh and sshd
+
+ssh:
+- SSH client program.
+- Used to connect to another computer.
+- Runs on the client machine.
+
+sshd:
+- SSH server daemon.
+- Accepts incoming SSH connections.
+- Runs in the background on the server.
+
+Example:
+
+    ssh student@servera
+
+Here, ssh is the client.
+
+On servera, the sshd service handles the incoming connection.
+
+
+D. What is SSH key-based authentication?
+
+SSH supports authentication using a pair of cryptographic keys.
+
+The two keys are:
+
+1. Private Key
+2. Public Key
+
+PRIVATE KEY:
+- Must remain secret.
+- Stored on the client machine.
+- Used to prove your identity.
+- Never share it with anyone.
+
+PUBLIC KEY:
+- Can be shared.
+- Installed on the remote server.
+- Stored in the authorized_keys file.
+
+When a user connects, the SSH server checks whether the
+client can prove ownership of the private key corresponding
+to an authorized public key.
+
+
+E. SSH KEY FILES
+
+Common RSA key files:
+
+    ~/.ssh/id_rsa
+    ~/.ssh/id_rsa.pub
+
+Explanation:
+
+id_rsa:
+Private key.
+
+id_rsa.pub:
+Public key.
+
+The .ssh directory is hidden because its name starts with
+a dot.
+
+To view it:
+
+    ls -la ~/.ssh
+
+
+F. What is authorized_keys?
+
+It is a file that contains public keys authorized to log in
+to a particular Linux user account.
+
+Location:
+
+    ~/.ssh/authorized_keys
+
+For example, the production1 account on serverb stores
+its authorized public keys in:
+
+    /home/production1/.ssh/authorized_keys
+
+
+G. What is a passphrase?
+
+A passphrase is an additional password that protects a
+private SSH key.
+
+When generating keys, ssh-keygen asks for a passphrase.
+
+In this practical, we press Enter without entering a
+passphrase because the lab requires a passphrase-less key.
+
+In production environments, protecting private keys with
+a passphrase is generally recommended.
+
+
+3. UNDERSTANDING THE MACHINES AND USERS
+---------------------------------------
+
+workstation:
+Starting machine. We execute lab commands here.
+
+servera:
+Intermediate machine where production1 generates SSH keys.
+
+serverb:
+Target machine where we configure SSH security.
+
+student:
+User used to start and finish the practical.
+
+production1:
+User whose SSH key pair is generated on servera.
+
+production2:
+User used to test failed password authentication.
+
+root:
+Linux administrator account.
+
+
+4. STEP-BY-STEP PRACTICAL
+-------------------------
+
+STEP 1: PREPARE THE LAB
+
+Run on workstation as student:
+
+    lab start ssh-review
+
+Purpose:
+- Prepares the practical environment.
+- Creates or configures required resources.
+- Makes the required machines ready.
+
+Do not skip this command.
+
+
+STEP 2: CONNECT TO SERVERA
+
+Run:
+
+    ssh student@servera
+
+Explanation:
+
+ssh:
+SSH client command.
+
+student:
+Username of the remote account.
+
+servera:
+Remote hostname.
+
+You are now connected to servera as student.
+
+
+STEP 3: SWITCH TO PRODUCTION1
+
+Run:
+
+    su - production1
+
+Password:
+
+    redhat
+
+Explanation:
+
+su:
+Substitute User. Used to switch between Linux users.
+
+-:
+Starts a login shell with the selected user's environment.
+
+production1:
+The user account we want to switch to.
+
+Verify:
+
+    whoami
+
+Expected output:
+
+    production1
+
+You are now working as production1 on servera.
+
+
+STEP 4: GENERATE SSH KEY PAIR
+
+Run:
+
+    ssh-keygen
+
+The command generates a public/private SSH key pair.
+
+It asks three questions.
+
+Question 1:
+
+    Enter file in which to save the key
+    (/home/production1/.ssh/id_rsa):
+
+Press Enter.
+
+Question 2:
+
+    Enter passphrase (empty for no passphrase):
+
+Press Enter without entering anything.
+
+Question 3:
+
+    Enter same passphrase again:
+
+Press Enter again.
+
+The following files are created:
+
+    /home/production1/.ssh/id_rsa
+    /home/production1/.ssh/id_rsa.pub
+
+Explanation:
+
+id_rsa:
+Private key.
+
+id_rsa.pub:
+Public key.
+
+Useful commands:
+
+    ls -la ~/.ssh
+
+Displays files inside the hidden SSH directory.
+
+    cat ~/.ssh/id_rsa.pub
+
+Displays the public key.
+
+IMPORTANT:
+Never share or display your private key.
+
+
+STEP 5: COPY PUBLIC KEY TO SERVERB
+
+Run on servera:
+
+    ssh-copy-id production1@serverb
+
+Purpose:
+
+This command copies the public SSH key to the remote
+production1 account on serverb.
+
+During execution:
+
+1. It reads the public key from servera.
+2. It connects to serverb.
+3. It asks you to verify the server's authenticity.
+4. Type yes.
+5. Enter the production1 password.
+
+Password:
+
+    redhat
+
+After successful execution, you should see a message
+similar to:
+
+    Number of key(s) added: 1
+
+The public key is now installed on serverb.
+
+IMPORTANT:
+
+ssh-copy-id copies only the public key.
+
+It does not copy the private key.
+
+
+STEP 6: TEST SSH KEY AUTHENTICATION
+
+Run:
+
+    ssh production1@serverb
+
+Expected result:
+
+You should successfully log in to serverb without entering
+the production1 account password.
+
+This confirms that SSH key-based authentication works.
+
+To return to servera:
+
+    exit
+
+
+STEP 7: SWITCH TO ROOT ON SERVERB
+
+Connect to serverb:
+
+    ssh production1@serverb
+
+Then execute:
+
+    su -
+
+Enter the root password:
+
+    redhat
+
+Explanation:
+
+su -:
+Switches to root and loads the root login environment.
+
+The root shell prompt generally ends with:
+
+    #
+
+The normal user shell prompt generally ends with:
+
+    $
+
+Root privileges are required to modify the SSH server
+configuration file.
+
+
+STEP 8: DISABLE DIRECT ROOT SSH LOGIN
+
+Open the SSH configuration file:
+
+    vi /etc/ssh/sshd_config
+
+Find the active setting:
+
+    PermitRootLogin
+
+Change it to:
+
+    PermitRootLogin no
+
+IMPORTANT:
+
+Edit the active uncommented parameter.
+
+For example:
+
+    #PermitRootLogin yes
+
+This is a commented line.
+
+A commented line starts with # and is not an active
+configuration directive.
+
+Save the file.
+
+Vim commands:
+
+    i       Enter insert mode
+    Esc     Exit insert mode
+    :wq     Save and quit
+
+Now reload SSH:
+
+    systemctl reload sshd.service
+
+Explanation:
+
+systemctl:
+Command used to manage system services.
+
+reload:
+Asks a running service to reload its configuration.
+
+sshd:
+SSH server daemon.
+
+.service:
+Identifies the systemd service unit.
+
+
+What does PermitRootLogin no mean?
+
+It prevents users from directly connecting to the server
+through SSH using the root account.
+
+For example:
+
+    ssh root@serverb
+
+This login should now fail.
+
+An administrator can still log in through an allowed
+normal account and use sudo if properly configured.
+
+
+STEP 9: TEST ROOT LOGIN RESTRICTION
+
+Keep the first terminal open with the root shell on serverb.
+
+Open another terminal on workstation.
+
+Connect to servera:
+
+    ssh production1@servera
+
+Now try:
+
+    ssh root@serverb
+
+Enter:
+
+    redhat
+
+Expected result:
+
+    Permission denied
+
+Why?
+
+Because serverb now has:
+
+    PermitRootLogin no
+
+Therefore, direct root SSH login is blocked.
+
+Even entering the correct root password will not allow
+the SSH login.
+
+
+STEP 10: DISABLE PASSWORD AUTHENTICATION
+
+Return to the first terminal where you have the root
+shell on serverb.
+
+Open:
+
+    vi /etc/ssh/sshd_config
+
+Find the active parameter:
+
+    PasswordAuthentication
+
+Change it to:
+
+    PasswordAuthentication no
+
+Save the file.
+
+Reload the SSH service:
+
+    systemctl reload sshd
+
+Explanation:
+
+PasswordAuthentication yes:
+Allows SSH password authentication.
+
+PasswordAuthentication no:
+Disables SSH password authentication.
+
+This setting applies to all users.
+
+IMPORTANT SECURITY WARNING:
+
+Before disabling password authentication on a real server,
+ensure that the required users have working SSH keys.
+
+Keep your existing administrative connection open while
+testing a new key-based connection.
+
+
+STEP 11: TEST PASSWORD AUTHENTICATION RESTRICTION
+
+Go to the second terminal.
+
+You should be logged in as production1 on servera.
+
+Execute:
+
+    ssh production2@serverb
+
+Expected result:
+
+    Permission denied (publickey,gssapi-keyex,gssapi-with-mic).
+
+Why does it fail?
+
+1. production2 does not have an authorized SSH key
+   configured for this connection.
+2. PasswordAuthentication is set to no.
+3. The server does not accept password-based login.
+
+Therefore, production2 cannot log in using its password.
+
+
+OPTIONAL: FORCE SPECIFIC AUTHENTICATION METHODS
+
+Command:
+
+    ssh -o PubkeyAuthentication=no \
+    -o PasswordAuthentication=yes production2@serverb
+
+Explanation:
+
+-o:
+Specifies an SSH client option.
+
+PubkeyAuthentication=no:
+Disables public-key authentication for this test.
+
+PasswordAuthentication=yes:
+Allows the client to attempt password authentication.
+
+IMPORTANT:
+
+These are client-side options.
+
+They do not override the SSH server's security policy.
+
+Since serverb has PasswordAuthentication no, the server
+will reject password authentication.
+
+
+STEP 12: VERIFY PUBLIC KEY AUTHENTICATION
+
+Return to the first terminal with the root shell on serverb.
+
+Run:
+
+    cat /etc/ssh/sshd_config
+
+Find:
+
+    #PubkeyAuthentication yes
+
+Explanation:
+
+The line is commented.
+
+In the standard OpenSSH configuration, public-key
+authentication is enabled by default.
+
+The commented example indicates the default setting.
+
+The effective configuration should allow public-key
+authentication.
+
+If necessary, explicitly configure:
+
+    PubkeyAuthentication yes
+
+Avoid creating duplicate or conflicting settings.
+
+You can verify the effective configuration using:
+
+    sshd -T
+
+To check only the three important parameters:
+
+    sshd -T | grep -E \
+    'permitrootlogin|passwordauthentication|pubkeyauthentication'
+
+Expected output:
+
+    permitrootlogin no
+    passwordauthentication no
+    pubkeyauthentication yes
+
+Note:
+The output uses lowercase parameter names.
+
+
+STEP 13: TEST PRODUCTION1 LOGIN AGAIN
+
+Return to the second terminal.
+
+You should be logged in as production1 on servera.
+
+Run:
+
+    ssh production1@serverb
+
+Expected result:
+
+Successful login without entering the account password.
+
+Why does it work?
+
+1. production1 has a valid SSH key pair.
+2. The public key was copied to serverb.
+3. Public-key authentication is enabled.
+4. Password authentication is disabled, but it is not
+   needed for this user.
+
+This confirms that the SSH security configuration works.
+
+
+STEP 14: EXIT ALL SESSIONS
+
+Use:
+
+    exit
+
+Repeat as necessary until you return to workstation
+as student.
+
+Remember:
+
+- exit closes the current shell.
+- exit from an SSH session disconnects from the remote host.
+- exit from a su shell returns to the previous user.
+
+Do not forget to close the extra terminal.
+
+
+5. IMPORTANT COMMANDS SUMMARY
+-----------------------------
+
+COMMAND:
+
+    lab start ssh-review
+
+Purpose:
+Prepare the lab environment.
+
+
+COMMAND:
+
+    ssh student@servera
+
+Purpose:
+Connect to servera as student.
+
+
+COMMAND:
+
+    su - production1
+
+Purpose:
+Switch to production1.
+
+
+COMMAND:
+
+    ssh-keygen
+
+Purpose:
+Generate an SSH key pair.
+
+
+COMMAND:
+
+    ls -la ~/.ssh
+
+Purpose:
+View hidden SSH files.
+
+
+COMMAND:
+
+    ssh-copy-id production1@serverb
+
+Purpose:
+Copy the public key to serverb.
+
+
+COMMAND:
+
+    ssh production1@serverb
+
+Purpose:
+Connect to serverb using SSH authentication.
+
+
+COMMAND:
+
+    su -
+
+Purpose:
+Switch to root.
+
+
+COMMAND:
+
+    vi /etc/ssh/sshd_config
+
+Purpose:
+Edit SSH server configuration.
+
+
+COMMAND:
+
+    systemctl reload sshd
+
+Purpose:
+Reload SSH server configuration.
+
+
+COMMAND:
+
+    systemctl status sshd
+
+Purpose:
+Check SSH service status.
+
+
+COMMAND:
+
+    sshd -t
+
+Purpose:
+Check SSH configuration syntax.
+
+
+COMMAND:
+
+    sshd -T
+
+Purpose:
+Display effective SSH configuration.
+
+
+COMMAND:
+
+    cat /etc/ssh/sshd_config
+
+Purpose:
+Display SSH configuration file contents.
+
+
+COMMAND:
+
+    exit
+
+Purpose:
+Exit the current shell or SSH session.
+
+
+COMMAND:
+
+    lab grade ssh-review
+
+Purpose:
+Evaluate the practical.
+
+
+COMMAND:
+
+    lab finish ssh-review
+
+Purpose:
+Finish the practical and clean up resources.
+
+
+6. IMPORTANT SSH CONFIGURATION PARAMETERS
+-----------------------------------------
+
+A. PermitRootLogin
+
+Configuration:
+
+    PermitRootLogin no
+
+Meaning:
+
+Prevents direct SSH login as root.
+
+B. PasswordAuthentication
+
+Configuration:
+
+    PasswordAuthentication no
+
+Meaning:
+
+Disables password-based SSH authentication for all users.
+
+C. PubkeyAuthentication
+
+Configuration:
+
+    PubkeyAuthentication yes
+
+Meaning:
+
+Allows authentication using authorized SSH public keys.
+
+
+7. DIFFERENCE BETWEEN THE THREE PARAMETERS
+-------------------------------------------
+
+PermitRootLogin:
+Controls whether root can log in directly through SSH.
+
+PasswordAuthentication:
+Controls whether SSH password authentication is allowed.
+
+PubkeyAuthentication:
+Controls whether SSH public-key authentication is allowed.
+
+These parameters perform different functions.
+
+Example:
+
+    PermitRootLogin no
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+
+This configuration means:
+
+- Root cannot directly log in using SSH.
+- Users cannot authenticate using SSH passwords.
+- Users with valid SSH keys can log in.
+
+
+8. COMMENTED VS UNCOMMENTED CONFIGURATION
+-----------------------------------------
+
+Example 1:
+
+    #PasswordAuthentication yes
+
+This is a commented configuration line.
+
+The # symbol indicates that it is not an active directive.
+
+Example 2:
+
+    PasswordAuthentication no
+
+This is an active configuration directive.
+
+It instructs the SSH server to disable password
+authentication.
+
+IMPORTANT:
+
+When modifying configuration files, always check whether
+the setting is commented or active.
+
+Also avoid leaving conflicting duplicate settings.
+
+
+9. COMMON ERRORS AND TROUBLESHOOTING
+------------------------------------
+
+ERROR 1: Permission denied during SSH login
+
+Possible reasons:
+
+- Incorrect username.
+- Incorrect hostname.
+- Public key not installed.
+- Incorrect SSH file permissions.
+- Wrong private key being used.
+
+Useful commands:
+
+    whoami
+    ls -la ~/.ssh
+    cat ~/.ssh/authorized_keys
+
+Run the authorized_keys command on the remote account.
+
+
+ERROR 2: ssh-copy-id command fails
+
+Possible reasons:
+
+- Incorrect password.
+- Remote server unavailable.
+- Incorrect hostname.
+- Network connection problem.
+
+Check the hostname and account details.
+
+
+ERROR 3: Password login still works
+
+Possible reasons:
+
+- Wrong configuration file edited.
+- Commented line modified instead of active line.
+- SSH service not reloaded.
+- Another configuration setting is affecting the result.
+
+Check:
+
+    sshd -T | grep passwordauthentication
+
+Expected:
+
+    passwordauthentication no
+
+
+ERROR 4: SSH service does not reload
+
+First check configuration syntax:
+
+    sshd -t
+
+No output generally means the configuration syntax is valid.
+
+Check service status:
+
+    systemctl status sshd
+
+Correct any configuration errors before reloading.
+
+
+ERROR 5: Production1 cannot log in after disabling passwords
+
+Possible reasons:
+
+- Public key not installed correctly.
+- Public-key authentication disabled.
+- Incorrect user account.
+- Incorrect SSH key permissions.
+
+Check:
+
+    sshd -T | grep pubkeyauthentication
+
+Expected:
+
+    pubkeyauthentication yes
+
+
+10. SSH SECURITY BEST PRACTICES
+-------------------------------
+
+1. Never share private SSH keys.
+2. Protect private keys with appropriate permissions.
+3. Use passphrases for private keys where practical.
+4. Disable direct root SSH login.
+5. Use normal administrative accounts with sudo.
+6. Disable password authentication only after testing
+   SSH key-based authentication.
+7. Keep an existing administrative session open while
+   modifying SSH access settings.
+8. Check SSH configuration syntax before reloading.
+9. Use firewall rules to restrict SSH access where appropriate.
+10. Regularly review authorized_keys files.
+
+
+11. FINAL CONFIGURATION CHECKLIST
+---------------------------------
+
+On serverb, verify the following effective settings:
+
+    permitrootlogin no
+    passwordauthentication no
+    pubkeyauthentication yes
+
+Testing checklist:
+
+[ ] SSH key pair generated for production1.
+[ ] Public key copied to serverb.
+[ ] production1 can log in using SSH keys.
+[ ] Direct root SSH login is blocked.
+[ ] Password authentication is disabled.
+[ ] production2 cannot log in using a password.
+[ ] Public-key authentication is enabled.
+[ ] SSH service configuration reloads successfully.
+
+
+12. EVALUATION
+--------------
+
+Return to workstation as student.
+
+Run:
+
+    lab grade ssh-review
+
+Purpose:
+
+- Checks whether the practical requirements are completed.
+- Identifies configuration errors.
+- Reports whether the practical is successful.
+
+If errors are reported:
+
+1. Read the error message.
+2. Return to the relevant machine.
+3. Correct the configuration.
+4. Run the grading command again.
+
+
+13. FINISH THE LAB
+------------------
+
+After successful evaluation, execute:
+
+    lab finish ssh-review
+
+Purpose:
+
+- Completes the practical.
+- Cleans up the lab resources.
+- Prevents previous exercise resources from affecting
+  upcoming exercises.
+
+Run this command from workstation as student.
+
+
+14. QUICK REVISION QUESTIONS
+----------------------------
+
+Q1. What is SSH?
+
+Answer:
+SSH stands for Secure Shell. It is used for secure
+remote computer access.
+
+Q2. What is ssh?
+
+Answer:
+It is the SSH client command used to connect to remote
+machines.
+
+Q3. What is sshd?
+
+Answer:
+It is the SSH server daemon that accepts incoming
+SSH connections.
+
+Q4. What is ssh-keygen?
+
+Answer:
+A command used to generate public and private SSH keys.
+
+Q5. What is a private key?
+
+Answer:
+A secret key stored on the client machine.
+
+Q6. What is a public key?
+
+Answer:
+A shareable key installed on the remote server.
+
+Q7. What is ssh-copy-id?
+
+Answer:
+A command used to install a local public key on a
+remote user's account.
+
+Q8. What is authorized_keys?
+
+Answer:
+A file containing public keys authorized to log in
+to a particular user account.
+
+Q9. What does PermitRootLogin no do?
+
+Answer:
+Prevents direct root login through SSH.
+
+Q10. What does PasswordAuthentication no do?
+
+Answer:
+Disables password-based SSH authentication.
+
+Q11. What does PubkeyAuthentication yes do?
+
+Answer:
+Enables SSH public-key authentication.
+
+Q12. What does systemctl reload sshd do?
+
+Answer:
+Reloads the SSH server configuration.
+
+Q13. What does sshd -t do?
+
+Answer:
+Checks SSH server configuration syntax.
+
+Q14. What does sshd -T do?
+
+Answer:
+Displays effective SSH server configuration values.
+
+Q15. Why can production1 log in after disabling password
+authentication?
+
+Answer:
+Because production1 has a valid public key installed
+on serverb and public-key authentication is enabled.
+
+Q16. Why does production2 fail to log in?
+
+Answer:
+Because production2 does not have a configured key for
+this connection and password authentication is disabled.
+
+Q17. Why should we test SSH keys before disabling passwords?
+
+Answer:
+To prevent losing remote access to the server.
+
+Q18. Can a user become root after direct root SSH login
+is disabled?
+
+Answer:
+Yes. An authorized user can use sudo or another permitted
+privilege-escalation method.
+
+
+============================================================
+END OF LAB EXPLANATION
+============================================================

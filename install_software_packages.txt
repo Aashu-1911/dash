@@ -1,0 +1,948 @@
+============================================================
+LAB: INSTALL AND UPDATE SOFTWARE PACKAGES
+============================================================
+
+1. OBJECTIVE OF THIS LAB
+------------------------
+
+The purpose of this lab is to learn how to manage software packages in Red Hat Enterprise Linux (RHEL).
+
+In Linux, software is distributed in the form of packages. We use package management tools to install, update, upgrade, and remove software.
+
+In this practical, we will learn:
+
+1. How to configure a software repository.
+2. How to list available software packages.
+3. How to install packages using DNF.
+4. How to remove installed packages.
+5. How to inspect RPM package information.
+6. How to install an RPM package manually.
+7. How to verify whether a package is installed.
+
+------------------------------------------------------------
+2. IMPORTANT CONCEPTS
+------------------------------------------------------------
+
+A. WHAT IS A SOFTWARE PACKAGE?
+
+A software package is a collection of files required to install and run a particular application or software.
+
+For example:
+- cups: Printing service software.
+- rht-system: RHCSA practice package.
+- httpd: Apache web server.
+- vim: Text editor.
+
+Linux packages generally contain:
+- Application files.
+- Configuration files.
+- Libraries.
+- Documentation.
+- Installation scripts.
+
+B. WHAT IS A PACKAGE MANAGER?
+
+A package manager is a tool that helps us install, update, upgrade, and remove software.
+
+In RHEL 9, the primary package management tool is DNF.
+
+DNF stands for Dandified YUM.
+
+Common package management commands:
+
+dnf install package_name
+    Installs a package.
+
+dnf remove package_name
+    Removes a package.
+
+dnf update
+    Updates installed packages.
+
+dnf list
+    Lists packages.
+
+dnf search keyword
+    Searches for packages.
+
+dnf info package_name
+    Displays package information.
+
+C. WHAT IS A SOFTWARE REPOSITORY?
+
+A software repository is a location where Linux packages are stored.
+
+A repository can be hosted on:
+- An HTTP server.
+- An HTTPS server.
+- An FTP server.
+- A local directory.
+- A network server.
+
+DNF uses repositories to find and download software packages.
+
+Example repository URL:
+
+http://content.example.com/rhel9.3/x86_64/rhcsa-practice/errata
+
+D. WHAT IS AN RPM PACKAGE?
+
+RPM stands for Red Hat Package Manager.
+
+An RPM file is a package file used by RHEL-based Linux distributions.
+
+Example:
+
+rhcsa-script-1.0.0-1.noarch.rpm
+
+Its filename contains:
+
+rhcsa-script = Package name
+1.0.0 = Version
+1 = Release number
+noarch = Architecture independent
+rpm = Package file format
+
+Difference between DNF and RPM:
+
+DNF:
+- Installs packages from repositories or local RPM files.
+- Automatically handles dependencies.
+- Can update packages.
+- Can remove packages.
+
+RPM:
+- Works directly with RPM package files.
+- Can inspect package information.
+- Can install and remove RPM packages.
+- Does not automatically resolve dependencies like DNF.
+
+IMPORTANT:
+For normal package installation, DNF is generally preferred because it handles dependencies automatically.
+
+------------------------------------------------------------
+3. PREPARE THE LAB ENVIRONMENT
+------------------------------------------------------------
+
+Command:
+
+lab start software-review
+
+Explanation:
+
+This command prepares the lab environment.
+
+It ensures that all required resources and files are available for completing the practical.
+
+Run this command on the workstation as the student user.
+
+------------------------------------------------------------
+4. CONNECT TO SERVERB
+------------------------------------------------------------
+
+Command:
+
+ssh student@serverb
+
+Explanation:
+
+SSH stands for Secure Shell.
+
+It allows us to connect to another Linux machine remotely through a secure connection.
+
+Here:
+- ssh = Secure Shell command.
+- student = Username.
+- serverb = Remote machine hostname.
+
+After connecting, you will be working on serverb.
+
+Now switch to the root user.
+
+Command:
+
+sudo -i
+
+Explanation:
+
+sudo allows a permitted user to execute commands with elevated privileges.
+
+-i starts an interactive login shell as root.
+
+Root is the superuser in Linux and has administrative privileges.
+
+Password:
+
+student
+
+After successful authentication, the prompt changes to:
+
+[root@serverb ~]#
+
+This indicates that you are now working as root.
+
+------------------------------------------------------------
+5. CONFIGURE A SOFTWARE REPOSITORY
+------------------------------------------------------------
+
+TASK:
+
+Create a repository named errata on serverb.
+
+Repository configuration file:
+
+/etc/yum.repos.d/errata.repo
+
+A. UNDERSTANDING THE REPOSITORY DIRECTORY
+
+Directory:
+
+/etc/yum.repos.d/
+
+Explanation:
+
+This directory contains repository configuration files used by DNF.
+
+These files generally have the .repo extension.
+
+Example:
+
+rhel.repo
+appstream.repo
+baseos.repo
+errata.repo
+
+B. CREATE THE REPOSITORY FILE
+
+Command:
+
+vim /etc/yum.repos.d/errata.repo
+
+Explanation:
+
+This opens the Vim editor and allows us to create or edit the repository configuration file.
+
+Add the following content:
+
+[errata]
+name=Red Hat Updates
+baseurl=http://content.example.com/rhel9.3/x86_64/rhcsa-practice/errata
+enabled=1
+gpgcheck=0
+
+Save and exit:
+
+Press ESC
+Type :wq
+Press ENTER
+
+C. UNDERSTANDING EACH CONFIGURATION OPTION
+
+1. [errata]
+
+This is the repository ID.
+
+It uniquely identifies the repository.
+
+2. name=Red Hat Updates
+
+This specifies the human-readable name of the repository.
+
+3. baseurl=
+
+This specifies the location from where DNF downloads packages.
+
+Here, packages are stored on an HTTP server.
+
+4. enabled=1
+
+This enables the repository.
+
+Values:
+
+enabled=1 means repository is enabled.
+
+enabled=0 means repository is disabled.
+
+5. gpgcheck=0
+
+This disables GPG signature verification for packages from this repository.
+
+GPG signatures are used to verify package authenticity and integrity.
+
+Values:
+
+gpgcheck=1 means verify GPG signatures.
+
+gpgcheck=0 means do not verify GPG signatures.
+
+IMPORTANT:
+
+This lab specifically requires gpgcheck=0.
+
+In production environments, package signature verification should generally remain enabled.
+
+------------------------------------------------------------
+6. LIST AVAILABLE PACKAGES
+------------------------------------------------------------
+
+TASK:
+
+Check whether the rht-system package is available in the configured repositories.
+
+Command:
+
+dnf list rht-system
+
+Explanation:
+
+This command searches the enabled repositories and displays information about the specified package.
+
+Possible output:
+
+Available Packages
+
+rht-system.noarch     1.0.0-2     errata
+
+Understanding the output:
+
+rht-system = Package name
+
+noarch = Architecture independent package
+
+1.0.0-2 = Version and release
+
+errata = Repository containing the package
+
+IMPORTANT:
+
+DNF can display two main package categories:
+
+Installed Packages:
+Packages already installed on the system.
+
+Available Packages:
+Packages available in enabled repositories but not currently installed.
+
+------------------------------------------------------------
+7. INSTALL THE RHT-SYSTEM PACKAGE
+------------------------------------------------------------
+
+TASK:
+
+Install the latest available version of rht-system.
+
+Command:
+
+dnf install rht-system
+
+Explanation:
+
+This command downloads and installs the rht-system package from an enabled repository.
+
+DNF performs the following operations:
+
+1. Searches for the package.
+2. Checks package dependencies.
+3. Downloads the required package files.
+4. Installs the package.
+5. Verifies the installation transaction.
+
+During installation, you may see:
+
+Is this ok [y/N]:
+
+Type:
+
+y
+
+Press ENTER.
+
+After successful installation, you will see:
+
+Complete!
+
+IMPORTANT:
+
+DNF automatically handles dependencies.
+
+A dependency is another package or software component required by a particular package to work correctly.
+
+------------------------------------------------------------
+8. REMOVE THE CUPS PACKAGE
+------------------------------------------------------------
+
+TASK:
+
+The serverb machine must not be able to connect to a paper printer.
+
+For this purpose, remove the cups package.
+
+A. CHECK WHETHER CUPS IS INSTALLED
+
+Command:
+
+dnf list cups
+
+Explanation:
+
+This command checks the package information for cups.
+
+Example output:
+
+Installed Packages
+
+cups.x86_64  1:2.3.3op2-13.el9
+
+This indicates that the cups package is already installed.
+
+Understanding:
+
+cups = Package name
+
+x86_64 = CPU architecture
+
+1: = Epoch value
+
+2.3.3op2 = Version
+
+13.el9 = Release information
+
+B. REMOVE CUPS
+
+Command:
+
+dnf remove cups.x86_64
+
+Explanation:
+
+This command removes the cups package from the system.
+
+CUPS stands for Common UNIX Printing System.
+
+It provides printing services and allows Linux systems to communicate with printers.
+
+Why are we removing it?
+
+The lab specifies that serverb must not be able to connect to a paper printer.
+
+Removing the CUPS package helps achieve this requirement.
+
+IMPORTANT:
+
+Removing a package can also remove other packages that depend on it or are no longer required.
+
+Example output:
+
+Remove 46 Packages
+
+Freed space: 94 M
+
+Is this ok [y/N]:
+
+Type:
+
+y
+
+Press ENTER.
+
+After successful removal:
+
+Complete!
+
+C. EXIT FROM ROOT
+
+Command:
+
+exit
+
+Explanation:
+
+This exits the root shell and returns to the student user.
+
+Prompt changes from:
+
+[root@serverb ~]#
+
+To:
+
+[student@serverb ~]$
+
+------------------------------------------------------------
+9. INSTALL AN RPM PACKAGE
+------------------------------------------------------------
+
+TASK:
+
+Install the following RPM package:
+
+rhcsa-script-1.0.0-1.noarch.rpm
+
+The lab preparation script has already downloaded this package into:
+
+/home/student
+
+A. UNDERSTAND THE RPM FILE
+
+Filename:
+
+rhcsa-script-1.0.0-1.noarch.rpm
+
+Components:
+
+rhcsa-script = Package name
+
+1.0.0 = Version
+
+1 = Release
+
+noarch = Architecture independent
+
+rpm = Package file format
+
+B. CHECK THE RPM PACKAGE INFORMATION
+
+Command:
+
+rpm -q -p rhcsa-script-1.0.0-1.noarch.rpm -i
+
+Explanation:
+
+This command displays information about an RPM package file without installing it.
+
+Understanding the options:
+
+rpm = RPM package management command.
+
+-q = Query information.
+
+-p = Query an RPM package file.
+
+-i = Display detailed package information.
+
+IMPORTANT:
+
+Here, the -p option tells RPM that we are querying a package file rather than an already installed package.
+
+The output contains information such as:
+
+Name
+Version
+Release
+Architecture
+Size
+License
+Description
+Source RPM
+Build Date
+
+You may see:
+
+Install Date: (not installed)
+
+This confirms that the package file exists but the package is not installed yet.
+
+C. INSTALL THE RPM PACKAGE USING DNF
+
+Command:
+
+sudo dnf install rhcsa-script-1.0.0-1.noarch.rpm
+
+Explanation:
+
+This command installs the local RPM package using DNF.
+
+sudo:
+Runs the command with administrative privileges.
+
+dnf:
+Package manager.
+
+install:
+Installs the specified package.
+
+rhcsa-script-1.0.0-1.noarch.rpm:
+The local RPM package file.
+
+Why use DNF instead of RPM?
+
+DNF can automatically resolve and install required dependencies from configured repositories.
+
+During installation, you may see:
+
+Is this ok [y/N]:
+
+Type:
+
+y
+
+Press ENTER.
+
+After successful installation:
+
+Installed:
+rhcsa-script-1.0.0-1.noarch
+
+Complete!
+
+D. VERIFY THE PACKAGE INSTALLATION
+
+Command:
+
+rpm -q rhcsa-script
+
+Explanation:
+
+This command checks whether the specified package is installed.
+
+Output:
+
+rhcsa-script-1.0.0-1.noarch
+
+This confirms that the package is successfully installed.
+
+Understanding the command:
+
+rpm = RPM package management command.
+
+-q = Query.
+
+rhcsa-script = Package name.
+
+IMPORTANT DIFFERENCE:
+
+rpm -q rhcsa-script
+
+Checks an installed package.
+
+rpm -q -p rhcsa-script-1.0.0-1.noarch.rpm -i
+
+Displays information about an RPM package file.
+
+------------------------------------------------------------
+10. EXIT FROM SERVERB
+------------------------------------------------------------
+
+Command:
+
+exit
+
+Explanation:
+
+This disconnects the SSH session and returns you to the workstation machine.
+
+You should now see:
+
+[student@workstation ~]$
+
+------------------------------------------------------------
+11. EVALUATE THE LAB
+------------------------------------------------------------
+
+Command:
+
+lab grade software-review
+
+Explanation:
+
+This command checks whether you have completed all the required tasks correctly.
+
+The grading script verifies the lab requirements.
+
+If any task fails:
+
+1. Read the error message.
+2. Identify the incorrect configuration or missing task.
+3. Correct the problem.
+4. Run the grading command again.
+
+Repeat until the lab is successfully graded.
+
+------------------------------------------------------------
+12. FINISH THE LAB
+------------------------------------------------------------
+
+Command:
+
+lab finish software-review
+
+Explanation:
+
+This command cleans up and completes the lab environment.
+
+It helps ensure that resources from this exercise do not affect upcoming exercises.
+
+Run this command on the workstation as the student user.
+
+============================================================
+13. IMPORTANT DNF COMMANDS
+============================================================
+
+1. Check DNF version:
+
+dnf --version
+
+2. List all available packages:
+
+dnf list available
+
+3. List all installed packages:
+
+dnf list installed
+
+4. List all packages:
+
+dnf list
+
+5. Search for a package:
+
+dnf search package_name
+
+6. Display package information:
+
+dnf info package_name
+
+7. Install a package:
+
+dnf install package_name
+
+8. Remove a package:
+
+dnf remove package_name
+
+9. Update all installed packages:
+
+dnf update
+
+10. Check available updates:
+
+dnf check-update
+
+11. Display enabled repositories:
+
+dnf repolist
+
+12. Display all repositories:
+
+dnf repolist all
+
+13. Clear DNF cache:
+
+dnf clean all
+
+14. Rebuild repository metadata cache:
+
+dnf makecache
+
+15. Display package dependencies:
+
+dnf repoquery --requires package_name
+
+============================================================
+14. IMPORTANT RPM COMMANDS
+============================================================
+
+1. Check whether a package is installed:
+
+rpm -q package_name
+
+2. Display detailed installed package information:
+
+rpm -qi package_name
+
+3. List files installed by a package:
+
+rpm -ql package_name
+
+4. Display information about an RPM file:
+
+rpm -qpi package.rpm
+
+5. List files inside an RPM file:
+
+rpm -qpl package.rpm
+
+6. Install an RPM package:
+
+rpm -ivh package.rpm
+
+7. Upgrade an RPM package:
+
+rpm -Uvh package.rpm
+
+8. Remove an installed RPM package:
+
+rpm -e package_name
+
+9. Verify installed package files:
+
+rpm -V package_name
+
+10. List all installed RPM packages:
+
+rpm -qa
+
+============================================================
+15. DIFFERENCE BETWEEN DNF AND RPM
+============================================================
+
+DNF:
+
+1. Works with configured software repositories.
+2. Can install packages from repositories.
+3. Can install local RPM files.
+4. Automatically resolves dependencies.
+5. Can update and remove packages.
+6. Recommended for normal package management.
+
+RPM:
+
+1. Works directly with RPM package files.
+2. Can query package information.
+3. Can install RPM files.
+4. Can remove installed RPM packages.
+5. Does not automatically resolve dependencies.
+
+Example:
+
+dnf install httpd
+
+Installs Apache web server and handles dependencies.
+
+rpm -ivh httpd.rpm
+
+Attempts to install the specified RPM file directly.
+
+============================================================
+16. IMPORTANT TERMS FOR EXAMINATION
+============================================================
+
+1. Repository:
+A storage location containing software packages.
+
+2. Package Manager:
+A tool used to install, update, and remove software.
+
+3. DNF:
+The default package management utility in RHEL 9.
+
+4. RPM:
+Red Hat Package Manager and its package file format.
+
+5. Dependency:
+Another package or component required by software to work.
+
+6. GPG:
+GNU Privacy Guard, used for cryptographic verification.
+
+7. baseurl:
+The location of a software repository.
+
+8. enabled:
+Controls whether a repository is enabled or disabled.
+
+9. gpgcheck:
+Controls package GPG signature verification.
+
+10. noarch:
+Indicates that a package is not specific to a particular CPU architecture.
+
+11. CUPS:
+Common UNIX Printing System, used for printing services.
+
+12. SSH:
+Secure Shell, used to connect to remote systems securely.
+
+============================================================
+17. COMPLETE LAB COMMAND SUMMARY
+============================================================
+
+Run these commands in the correct order:
+
+ON WORKSTATION:
+
+1. lab start software-review
+
+2. ssh student@serverb
+
+ON SERVERB:
+
+3. sudo -i
+
+4. vim /etc/yum.repos.d/errata.repo
+
+Add:
+
+[errata]
+name=Red Hat Updates
+baseurl=http://content.example.com/rhel9.3/x86_64/rhcsa-practice/errata
+enabled=1
+gpgcheck=0
+
+5. dnf list rht-system
+
+6. dnf install rht-system
+
+7. dnf list cups
+
+8. dnf remove cups.x86_64
+
+9. exit
+
+10. rpm -q -p rhcsa-script-1.0.0-1.noarch.rpm -i
+
+11. sudo dnf install rhcsa-script-1.0.0-1.noarch.rpm
+
+12. rpm -q rhcsa-script
+
+13. exit
+
+BACK ON WORKSTATION:
+
+14. lab grade software-review
+
+15. lab finish software-review
+
+============================================================
+18. FINAL REVISION
+============================================================
+
+Remember these important commands:
+
+dnf install = Install a package.
+
+dnf remove = Remove a package.
+
+dnf update = Update installed packages.
+
+dnf list = List packages.
+
+dnf search = Search packages.
+
+dnf info = Display package information.
+
+dnf repolist = List repositories.
+
+rpm -q = Query an installed package.
+
+rpm -qi = Display installed package information.
+
+rpm -qpi = Display RPM file information.
+
+rpm -ivh = Install an RPM package.
+
+rpm -Uvh = Upgrade an RPM package.
+
+rpm -e = Remove an RPM package.
+
+rpm -qa = List all installed RPM packages.
+
+lab start = Prepare the lab.
+
+lab grade = Evaluate the lab.
+
+lab finish = Complete the lab.
+
+============================================================
+END OF LAB EXPLANATION
+============================================================

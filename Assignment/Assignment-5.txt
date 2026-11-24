@@ -1,0 +1,24 @@
+lab start users-review                     # Prepares the lab environment and required resources.
+ssh student@serverb                        # Connects via SSH to serverb as the student user.
+sudo -i                                    # Switches to an interactive root login shell.
+vim /etc/login.defs                        # Opens /etc/login.defs to set PASS_MAX_DAYS to 30.
+groupadd -g 35000 consultants              # Creates the consultants group with GID 35000.
+vim /etc/sudoers.d/consultants             # Opens sudoers drop-in file; add "%consultants  ALL=(ALL) ALL".
+useradd -G consultants consultant1         # Creates consultant1 with consultants as supplementary group.
+useradd -G consultants consultant2         # Creates consultant2 with consultants as supplementary group.
+useradd -G consultants consultant3         # Creates consultant3 with consultants as supplementary group.
+passwd consultant1                         # Sets consultant1's password (enter redhat when prompted).
+passwd consultant2                         # Sets consultant2's password (enter redhat when prompted).
+passwd consultant3                         # Sets consultant3's password (enter redhat when prompted).
+date -d "+90 days" +%F                     # Prints the date 90 days from today in YYYY-MM-DD format.
+chage -E <YYYY-MM-DD> consultant1          # Sets account expiration for consultant1 (use date from above).
+chage -E <YYYY-MM-DD> consultant2          # Sets account expiration for consultant2 (use date from above).
+chage -E <YYYY-MM-DD> consultant3          # Sets account expiration for consultant3 (use date from above).
+chage -M 15 consultant2                    # Sets maximum password age for consultant2 to 15 days.
+chage -d 0 consultant1                     # Forces consultant1 to change password at next login.
+chage -d 0 consultant2                     # Forces consultant2 to change password at next login.
+chage -d 0 consultant3                     # Forces consultant3 to change password at next login.
+exit                                       # Exits the root shell back to student on serverb.
+exit                                       # Closes the SSH session and returns to workstation.
+lab grade users-review                     # Grades the lab exercise and reports any failures.
+lab finish users-review                    # Cleans up and completes the lab exercise.

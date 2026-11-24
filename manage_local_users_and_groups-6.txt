@@ -1,0 +1,1001 @@
+======================================================================
+LAB: MANAGE LOCAL USERS AND GROUPS
+Complete explanation, concepts, command syntax, and verification
+======================================================================
+
+1. PURPOSE OF THIS PRACTICAL
+----------------------------
+In this practical, you configure local user accounts and groups on the
+serverb Linux machine.
+
+You will:
+1. Set the default maximum password age for newly created users to 30 days.
+2. Create a supplementary group named consultants with GID 35000.
+3. Give every member of the consultants group permission to run any command
+   through sudo, as any user.
+4. Create three users: consultant1, consultant2, and consultant3.
+5. Add all three users to the consultants supplementary group.
+6. Set an initial password for each user.
+7. Set all three accounts to expire on a date 90 days in the future.
+8. Give consultant2 a password maximum age of 15 days instead of the
+   default 30 days.
+9. Force all three users to change their initial password at first login.
+10. Grade and finish the lab.
+
+IMPORTANT:
+- Run the user, group, password, and sudo configuration commands on serverb.
+- Run lab start, lab grade, and lab finish on workstation as student.
+- The date shown in the practical (2025-09-22) is only an example. Always
+  calculate the date on your own lab system.
+
+
+2. IMPORTANT LINUX TERMS AND CONCEPTS
+-------------------------------------
+
+2.1 User account
+A user account identifies a person or service to Linux. Each local user has
+an account entry containing information such as:
+- Username
+- User ID (UID)
+- Primary group ID (GID)
+- Home directory
+- Login shell
+- Password information (stored separately in a protected file)
+
+Examples in this practical:
+consultant1, consultant2, consultant3
+
+2.2 UID (User ID)
+UID is the numeric identity of a user. Linux uses the UID internally when
+checking file ownership and permissions. Usernames are human-friendly names
+for these numeric IDs.
+
+Useful command:
+    id consultant1
+
+2.3 Group
+A group is a collection of users. Groups make it easier to grant permissions
+to multiple users at once instead of configuring each user separately.
+
+Example:
+The consultants group contains consultant1, consultant2, and consultant3.
+If a permission is granted to the consultants group, all its members can
+receive that permission.
+
+2.4 GID (Group ID)
+GID is the numeric identity of a group. In this practical, the consultants
+group must have GID 35000.
+
+2.5 Primary group
+Every Linux user has one primary group. Files created by the user normally
+receive this group as their group ownership, subject to directory settings.
+
+When useradd creates a user without a -g option, the system normally uses its
+configured default. On Red Hat systems, this is commonly a private group with
+the same name as the user.
+
+2.6 Supplementary group
+A supplementary group is an additional group membership besides the user's
+primary group. A user can belong to multiple supplementary groups.
+
+In this practical, consultants is supplementary. The -G option of useradd
+adds the user to supplementary group(s).
+
+2.7 Difference between -g and -G
+    -g GROUP     Set the user's primary group.
+    -G GROUPS    Set supplementary group membership.
+
+Examples:
+    useradd -g consultants consultant1
+        Makes consultants the primary group.
+
+    useradd -G consultants consultant1
+        Adds consultant1 to consultants as a supplementary group, while the
+        primary group is selected by the system's normal defaults.
+
+This practical specifically requires -G, not -g.
+
+2.8 Root user
+root is the superuser/administrator account. It has UID 0 and can perform
+system-wide administrative operations, such as creating users and groups,
+changing system configuration, and managing permissions.
+
+2.9 sudo
+sudo allows an authorized user to run a command with another user's
+permissions, commonly root permissions.
+
+Example:
+    sudo systemctl status sshd
+
+By default, sudo normally asks for the password of the person running sudo,
+not the root password. The exact behavior can be changed by sudo policy.
+
+2.10 Password aging
+Password aging controls how long a password can be used and when users are
+warned or required to change it.
+
+Important terms:
+- Maximum days: maximum time a password may be used before it expires.
+- Minimum days: minimum number of days that must pass before the password
+  can be changed again.
+- Warning days: how many days before password expiry the user is warned.
+- Last password change: date on which the password was last changed.
+- Account expiration: date after which the entire account is no longer
+  permitted to log in. This is different from password expiration.
+
+2.11 Password expiration vs account expiration
+PASSWORD EXPIRATION:
+The password must be changed after a specified number of days. The account
+itself is not necessarily disabled.
+
+ACCOUNT EXPIRATION:
+The account expires on a specified date. The user cannot normally log in
+once the account has expired, even if the password is correct.
+
+In this practical:
+- consultant1: password maximum age is 30 days by default; account expires
+  90 days from the date calculated during the lab.
+- consultant2: password maximum age is 15 days; account expires on the same
+  90-days-from-today date.
+- consultant3: password maximum age is 30 days by default; account expires
+  on the same 90-days-from-today date.
+
+2.12 /etc/passwd
+This file stores local account identity information such as username, UID,
+primary GID, home directory, and login shell.
+It does not store users' actual password hashes on a normal modern Linux
+system; those are stored in /etc/shadow.
+
+2.13 /etc/shadow
+This protected file stores password hashes and password-aging information.
+Normal users cannot read it. Administrative tools such as passwd and chage
+update the relevant information.
+
+2.14 /etc/group
+This file stores local group information, including group name, password
+placeholder, GID, and supplementary member list.
+
+2.15 /etc/login.defs
+This file contains system-wide login and account-creation defaults, including
+password-aging defaults used when new local users are created.
+
+Important limitation:
+Changing PASS_MAX_DAYS in /etc/login.defs does not automatically change the
+password-aging settings of users who already exist. Existing accounts must
+be changed separately, for example with chage -M.
+
+2.16 /etc/sudoers and /etc/sudoers.d
+The sudoers configuration defines who may use sudo and which commands they
+may execute.
+- /etc/sudoers is the main configuration file.
+- /etc/sudoers.d is a directory for separate additional policy files.
+
+A separate file is useful because it keeps a rule for one group or purpose
+separate from the main sudoers file.
+
+
+3. UNDERSTANDING THE COMMAND PROMPT
+-----------------------------------
+Examples of prompts used in this practical:
+
+    [student@workstation ~]$
+        Logged in as student on workstation. $ means a normal user shell.
+
+    [student@serverb ~]$
+        Logged in as student on serverb. $ means a normal user shell.
+
+    [root@serverb ~]#
+        Logged in as root on serverb. # normally indicates a root shell.
+
+The prompt is not part of the command. Do not type the prompt characters
+([student@...], $, or #) when entering a command.
+
+The tilde (~) represents the current user's home directory.
+
+
+4. COMPLETE PRACTICAL PROCEDURE
+-------------------------------
+
+STEP 1: PREPARE THE LAB ON WORKSTATION
+
+Command:
+    lab start users-review
+
+Where to run it:
+    workstation, as student
+
+Explanation:
+- lab is the training environment's lab management command.
+- start tells it to prepare/start the exercise.
+- users-review is the name of this exercise.
+
+This prepares the required virtual machines, files, and environment.
+It is not a general Linux command available on every Linux installation;
+it belongs to the training lab environment.
+
+
+STEP 2: CONNECT TO SERVERB USING SSH
+
+Command:
+    ssh student@serverb
+
+General syntax:
+    ssh USERNAME@HOSTNAME
+
+Meaning:
+- ssh: Secure Shell; opens an encrypted remote terminal session.
+- student: the username to use on the remote machine.
+- @: separates the username from the host name.
+- serverb: the remote machine's host name.
+
+After connecting, the prompt should identify serverb, for example:
+    [student@serverb ~]$
+
+You are now working on serverb, not workstation.
+
+
+STEP 3: SWITCH TO THE ROOT ACCOUNT
+
+Command:
+    sudo -i
+
+Meaning:
+- sudo: run a command with elevated privileges according to sudo policy.
+- -i: start an interactive login shell for the target user; without a
+  different target specified, the target is root.
+
+The system may ask for the password of student. Enter the lab-provided
+student password. Password characters normally do not appear while typing.
+
+After success, the prompt should look similar to:
+    [root@serverb ~]#
+
+You need root privileges for the following system administration tasks.
+
+Alternative forms you may encounter:
+    sudo COMMAND       Run one command with elevated privileges.
+    sudo -i            Open a root login shell.
+    su -               Switch to root when you know and are allowed to use
+                       the root account password.
+
+For this lab, use the specified command: sudo -i.
+
+
+STEP 4: SET THE DEFAULT PASSWORD MAXIMUM AGE TO 30 DAYS
+
+File to edit:
+    /etc/login.defs
+
+Command:
+    vim /etc/login.defs
+
+Meaning:
+- vim: a terminal text editor.
+- /etc/login.defs: system login/account defaults file.
+
+Find the password-aging section and set the directive to:
+    PASS_MAX_DAYS 30
+
+Related directives often shown nearby:
+    PASS_MAX_DAYS   30
+    PASS_MIN_DAYS   0
+    PASS_WARN_AGE   7
+
+What they mean:
+- PASS_MAX_DAYS 30: a newly created user's password may be used for at most
+  30 days before it must be changed.
+- PASS_MIN_DAYS 0: no minimum waiting period is imposed by this setting
+  between password changes.
+- PASS_WARN_AGE 7: warn the user 7 days before password expiry.
+
+The practical asks you to change PASS_MAX_DAYS. Leave the other values as
+they are unless your lab instructions say otherwise.
+
+How to edit using Vim:
+1. Open the file:
+       vim /etc/login.defs
+2. Use arrow keys to move to the PASS_MAX_DAYS line.
+3. Press i to enter Insert mode.
+4. Change the value to 30. If the directive is absent, add the line in the
+   password-aging section.
+5. Press Esc to leave Insert mode.
+6. Type :wq and press Enter to write/save and quit.
+
+Useful Vim commands:
+    i       Enter Insert mode.
+    Esc     Return to Normal mode.
+    :w      Save/write the file.
+    :q      Quit (only if there are no unsaved changes).
+    :wq     Save and quit.
+    :q!     Quit without saving changes.
+    /TEXT   Search forward for TEXT; press Enter, then n for next match.
+
+Important:
+- Edit the existing PASS_MAX_DAYS directive rather than leaving conflicting
+  duplicate definitions in the file.
+- This setting is a default used when new users are created. It does not
+  retroactively update existing users.
+- Password complexity/quality rules are usually controlled separately by
+  PAM and password-quality configuration. PASS_MIN_LEN in older examples
+  may be obsolete or ignored on modern Red Hat systems.
+
+
+STEP 5: CREATE THE CONSULTANTS GROUP WITH GID 35000
+
+Command:
+    groupadd -g 35000 consultants
+
+General syntax:
+    groupadd [OPTIONS] GROUP_NAME
+
+Meaning:
+- groupadd: creates a new local group.
+- -g 35000: explicitly assigns GID 35000.
+- consultants: name of the group being created.
+
+Why create a group?
+Instead of granting the same permission to three individual users, you can
+grant permission once to the consultants group and add the users to it.
+
+Important:
+- The GID must not already be in use by another group.
+- If GID 35000 is already assigned, groupadd will report an error.
+- Do not create the group again if it already exists; verify it first.
+
+Verification command:
+    getent group consultants
+
+Possible output format:
+    consultants:x:35000:
+
+Output fields:
+    group_name : password_placeholder : GID : supplementary_members
+
+
+STEP 6: GIVE THE CONSULTANTS GROUP SUDO PERMISSION
+
+Create this file:
+    /etc/sudoers.d/consultants
+
+Open it as root:
+    vim /etc/sudoers.d/consultants
+
+Add exactly this rule:
+    %consultants  ALL=(ALL) ALL
+
+Breakdown of the sudoers rule:
+    %consultants  ALL=(ALL) ALL
+    |             |   |     |
+    |             |   |     +-- Commands that may be run: ALL commands
+    |             |   +-------- Runas list: any target user
+    |             +------------ Host list: all hosts covered by this policy
+    +-------------------------- Group named consultants
+
+Detailed meaning:
+- % before consultants means the name refers to a UNIX/Linux group.
+  Without %, sudoers would interpret consultants as a user name.
+- The first ALL means this rule applies on all hosts.
+- (ALL) means a member may run commands as any target user. The default
+  target when using sudo is root.
+- The final ALL means any command is permitted by this rule.
+
+Examples of what an authorized group member could do:
+    sudo whoami
+        Runs whoami as root by default; output should be root.
+
+    sudo -u student whoami
+        Runs whoami as student.
+
+    sudo -u root command
+        Explicitly runs a command as root.
+
+The rule does not contain NOPASSWD. Therefore, sudo may still ask the user
+for their own password, according to the system's sudo configuration.
+
+Save and exit Vim:
+    Esc
+    :wq
+    Enter
+
+IMPORTANT FILE PERMISSIONS:
+Sudoers policy files must be protected. A typical correct setup is root
+ownership and mode 0440.
+
+Commands:
+    chown root:root /etc/sudoers.d/consultants
+    chmod 0440 /etc/sudoers.d/consultants
+
+Meaning:
+- chown root:root sets the owner to root and group owner to root.
+- chmod 0440 gives read permission to the owner and group, and no
+  permissions to others. No write permission is granted to anyone.
+
+Validate the syntax without opening the editor:
+    visudo -cf /etc/sudoers.d/consultants
+
+Meaning:
+- visudo: sudoers-aware validation/editor utility.
+- -c: check the configuration syntax and exit.
+- -f FILE: check the specified file.
+
+The lab says not to use visudo to edit /etc/sudoers. The command above uses
+visudo only for syntax checking; it does not open an editor or change the
+file. If the lab environment does not require validation, this is an
+additional safety check rather than a required lab step.
+
+Why syntax checking matters:
+A syntax error in sudoers configuration can prevent sudo policy from being
+loaded correctly. Always validate a sudoers file before relying on it.
+
+Note:
+The main /etc/sudoers file must include the /etc/sudoers.d directory for
+files placed there to be read. Standard Red Hat configurations normally
+include it. Do not change the main file unless the practical requires it.
+
+
+STEP 7: CREATE THREE USERS AND ADD THEM TO THE SUPPLEMENTARY GROUP
+
+Commands:
+    useradd -G consultants consultant1
+    useradd -G consultants consultant2
+    useradd -G consultants consultant3
+
+General syntax:
+    useradd [OPTIONS] USERNAME
+
+Meaning:
+- useradd: creates a local user account.
+- -G consultants: adds the user to the consultants supplementary group.
+- consultant1: username being created.
+
+Repeat the command for each user because each command creates one account.
+
+Why is -G used?
+The practical asks for consultants to be a supplementary group. -G does
+that. It does not make consultants the primary group.
+
+What may happen automatically?
+Depending on the system defaults, useradd commonly creates a home directory
+such as /home/consultant1 and assigns a default login shell. Check the
+account settings rather than assuming every system has identical defaults.
+
+Useful related useradd options:
+    -m          Create the user's home directory if needed.
+    -u UID      Set a specific UID.
+    -g GROUP    Set the primary group.
+    -G GROUPS   Set supplementary group(s).
+    -s SHELL   Set the login shell.
+    -c COMMENT Set a descriptive comment/full name.
+
+Examples (for learning only):
+    useradd -m -G consultants consultant4
+    useradd -g consultants consultant5
+
+Do not run these extra examples during this practical because the lab asks
+for only the three named users.
+
+
+STEP 8: SET INITIAL PASSWORDS
+
+Commands:
+    passwd consultant1
+    passwd consultant2
+    passwd consultant3
+
+General syntax:
+    passwd [OPTIONS] USERNAME
+
+Meaning:
+- passwd: changes a user's password.
+- consultant1: the account whose password is being set.
+
+When prompted:
+    New password:
+    Retype new password:
+
+Enter the password required by the lab: redhat
+
+Linux normally does not display password characters while you type. This is
+normal; it does not mean that the keyboard is not working.
+
+The lab may display a warning such as:
+    BAD PASSWORD: The password is shorter than 8 characters
+
+This is a password-quality warning. In the supplied lab, the password may
+still be accepted and the command may finish with:
+    passwd: all authentication tokens updated successfully
+
+For real systems, do not use the weak example password redhat. Use a long,
+unique password that satisfies your organization's password policy.
+
+Why set passwords after useradd?
+A newly created account may have no usable password until an administrator
+sets one. Setting the password allows password authentication, subject to
+other account and login policies.
+
+
+STEP 9: CALCULATE THE DATE 90 DAYS IN THE FUTURE
+
+Command:
+    date -d "+90 days" +%F
+
+General syntax:
+    date [OPTIONS] [FORMAT]
+
+Breakdown:
+- date: displays or calculates date/time information.
+- -d "+90 days": asks GNU date to interpret a date 90 days from now.
+- +%F: prints the date in YYYY-MM-DD format.
+
+Format code:
+    %F = %Y-%m-%d
+
+Example output from an older lab run:
+    2025-09-22
+
+That output is only an example. Your output will depend on the current date
+and time on serverb. Copy the exact date produced by your own command.
+
+Why do we calculate it?
+The next command requires an absolute date. Calculating it avoids manually
+counting 90 days and reduces date-entry mistakes.
+
+
+STEP 10: SET THE ACCOUNT EXPIRATION DATE FOR ALL THREE USERS
+
+Suppose your date command returned:
+    YYYY-MM-DD
+
+Replace YYYY-MM-DD below with the actual date returned by your system.
+
+Commands:
+    chage -E YYYY-MM-DD consultant1
+    chage -E YYYY-MM-DD consultant2
+    chage -E YYYY-MM-DD consultant3
+
+General syntax:
+    chage [OPTIONS] USERNAME
+
+Meaning:
+- chage: changes user password-aging and account-expiration information.
+- -E DATE: sets the account expiration date.
+- USERNAME: account to modify.
+
+Important distinction:
+chage -E sets the expiration date of the ACCOUNT, not the maximum age of
+the password.
+
+After the account expiration date, the account is expired and normal login
+is not allowed. This is separate from whether the password has expired.
+
+Date format:
+    YYYY-MM-DD
+Example:
+    chage -E 2026-12-01 consultant1
+
+The example above is only an illustration. Use the date calculated in
+Step 9, not an arbitrary date.
+
+
+STEP 11: SET consultant2 PASSWORD TO EXPIRE AFTER 15 DAYS
+
+Command:
+    chage -M 15 consultant2
+
+General syntax:
+    chage -M NUMBER_OF_DAYS USERNAME
+
+Meaning:
+- chage: changes password-aging settings.
+- -M 15: sets the maximum password age to 15 days.
+- consultant2: user whose password policy is being changed.
+
+Result:
+- consultant1 keeps the default maximum password age of 30 days.
+- consultant2 has a maximum password age of 15 days.
+- consultant3 keeps the default maximum password age of 30 days.
+
+Why does consultant2 need a separate command?
+The /etc/login.defs setting establishes the default for newly created users.
+A per-user setting can override that default. In this case, consultant2 gets
+15 days instead of 30 days.
+
+Other useful chage options:
+    -m DAYS    Minimum number of days between password changes.
+    -M DAYS    Maximum number of days a password may be used.
+    -W DAYS    Number of days before password expiry to show a warning.
+    -E DATE    Account expiration date; use YYYY-MM-DD or -1 to remove it.
+    -d DATE    Set the date of the last password change.
+    -l         Display the user's password-aging information.
+
+Be careful:
+-M changes password maximum age. -E changes account expiration. They are
+not interchangeable.
+
+
+STEP 12: FORCE ALL THREE USERS TO CHANGE PASSWORD AT FIRST LOGIN
+
+Commands:
+    chage -d 0 consultant1
+    chage -d 0 consultant2
+    chage -d 0 consultant3
+
+General syntax:
+    chage -d DATE USERNAME
+
+Meaning:
+- -d sets the date of the user's last password change.
+- 0 means the password was last changed at day zero, so it is treated as
+  needing an immediate change.
+- When the user next logs in through a password-change-capable login path,
+  the system requires the user to change the password.
+
+This is a common way for an administrator to assign an initial temporary
+password and make the user choose a new password at first login.
+
+Important:
+- The command does not set a new password; passwd did that in Step 8.
+- The command does not set account expiration; chage -E did that in Step 10.
+- The command forces a password change at the next applicable login.
+
+
+STEP 13: EXIT ROOT AND DISCONNECT FROM SERVERB
+
+First command:
+    exit
+
+This exits the root login shell and returns to the student shell on serverb.
+Expected prompt:
+    [student@serverb ~]$
+
+Second command:
+    exit
+
+This closes the SSH connection and returns you to workstation.
+Expected prompt:
+    [student@workstation ~]$
+
+Why run exit twice?
+You entered two shell/session levels:
+1. sudo -i opened a root login shell inside the SSH session.
+2. ssh opened the remote serverb session.
+
+The first exit leaves root. The second exit closes SSH.
+
+
+5. USEFUL VERIFICATION COMMANDS
+-------------------------------
+These commands help you confirm that the configuration is correct.
+Run administrative checks on serverb. Some commands may require root or
+sudo privileges.
+
+5.1 Verify that the group exists and has the required GID
+    getent group consultants
+
+Expected key information:
+    consultants:x:35000:...
+
+5.2 Verify each user's UID, primary GID, and group memberships
+    id consultant1
+    id consultant2
+    id consultant3
+
+Look for consultants in the groups list. The GID for consultants should be
+35000. The primary group may be a different private group.
+
+5.3 Display group database information
+    getent group
+    getent group consultants
+
+5.4 Display user account records
+    getent passwd consultant1
+    getent passwd consultant2
+    getent passwd consultant3
+
+The output format is generally:
+    username:password_placeholder:UID:GID:comment:home_directory:login_shell
+
+5.5 Check password-aging and account-expiration information
+    chage -l consultant1
+    chage -l consultant2
+    chage -l consultant3
+
+Check these fields:
+- Last password change
+- Password expires
+- Password inactive (if configured)
+- Account expires
+- Minimum number of days between password change
+- Maximum number of days between password change
+- Number of days of warning before password expires
+
+Expected maximum password ages:
+    consultant1: 30 days (default)
+    consultant2: 15 days (user-specific override)
+    consultant3: 30 days (default)
+
+All three should show the same account expiration date calculated in
+Step 9. Their last password change should indicate that a password change
+is required at the next applicable login because chage -d 0 was used.
+
+5.6 Check the configured default in login.defs
+    grep '^PASS_MAX_DAYS' /etc/login.defs
+
+Expected line:
+    PASS_MAX_DAYS 30
+
+Explanation:
+- grep searches text for a pattern.
+- ^ means the pattern must appear at the beginning of a line.
+- PASS_MAX_DAYS is the text being searched for.
+
+5.7 Check the sudoers drop-in file
+    cat /etc/sudoers.d/consultants
+
+Expected rule:
+    %consultants  ALL=(ALL) ALL
+
+Check file owner and permissions:
+    ls -l /etc/sudoers.d/consultants
+
+A typical secure result is owned by root:root and has permissions similar
+to -r--r----- (mode 0440).
+
+Validate syntax:
+    visudo -cf /etc/sudoers.d/consultants
+
+5.8 Check the sudo permissions of a user
+When testing as a consultant user, use:
+    sudo -l
+
+This lists the commands the current user is allowed to run with sudo.
+The user must be a member of consultants, and the session must recognize
+that group membership.
+
+If group membership was added while the user was already logged in, the
+user may need to log out and log back in before the new membership appears
+in that session.
+
+
+6. IMPORTANT COMMAND FORMATS - QUICK REVISION
+---------------------------------------------
+
+SSH:
+    ssh USERNAME@HOSTNAME
+    Example: ssh student@serverb
+
+Open a root login shell:
+    sudo -i
+
+Edit a file:
+    vim /PATH/TO/FILE
+    Example: vim /etc/login.defs
+
+Create a group with a specified GID:
+    groupadd -g GID GROUP_NAME
+    Example: groupadd -g 35000 consultants
+
+Create a sudoers group rule:
+    %GROUP_NAME  HOSTS=(RUNAS_USERS) COMMANDS
+    Example: %consultants ALL=(ALL) ALL
+
+Create a user with supplementary group membership:
+    useradd -G GROUP_NAME USERNAME
+    Example: useradd -G consultants consultant1
+
+Set a user's password:
+    passwd USERNAME
+
+Calculate a date 90 days ahead:
+    date -d "+90 days" +%F
+
+Set account expiration:
+    chage -E YYYY-MM-DD USERNAME
+
+Set maximum password age:
+    chage -M DAYS USERNAME
+
+Force password change at next applicable login:
+    chage -d 0 USERNAME
+
+Display password aging:
+    chage -l USERNAME
+
+Check user identity and groups:
+    id USERNAME
+
+Look up a group:
+    getent group GROUP_NAME
+
+Check a file:
+    cat /PATH/TO/FILE
+    ls -l /PATH/TO/FILE
+
+Change file ownership:
+    chown OWNER:GROUP FILE
+
+Change file permissions:
+    chmod MODE FILE
+
+Validate sudoers syntax:
+    visudo -cf FILE
+
+Leave the current shell/session:
+    exit
+
+Grade the lab:
+    lab grade users-review
+
+Finish the lab:
+    lab finish users-review
+
+
+7. FINAL LAB COMMANDS: GRADE AND FINISH
+---------------------------------------
+
+STEP 1: GRADE THE PRACTICAL
+Run on workstation as student:
+    lab grade users-review
+
+Meaning:
+- lab: training environment management command.
+- grade: checks whether the required tasks were completed correctly.
+- users-review: name of this exercise.
+
+If the grading command reports a failure:
+1. Read the exact failed requirement.
+2. Reconnect to serverb if the correction is on serverb:
+       ssh student@serverb
+       sudo -i
+3. Correct the configuration.
+4. Exit back to workstation.
+5. Run the grading command again.
+
+STEP 2: FINISH THE PRACTICAL
+After the grade is successful, run on workstation as student:
+    lab finish users-review
+
+This cleans up or resets lab resources so they do not interfere with later
+training exercises. Follow the training environment's instructions and do
+not skip this step.
+
+
+8. COMMON MISTAKES AND HOW TO AVOID THEM
+----------------------------------------
+
+Mistake 1: Running lab commands on serverb.
+Correction: Run lab start, lab grade, and lab finish on workstation as
+student. Run account-management tasks on serverb.
+
+Mistake 2: Forgetting to switch to root.
+Correction: After SSH, run sudo -i before editing system files or creating
+users and groups.
+
+Mistake 3: Using -g instead of -G with useradd.
+Correction: The practical requires consultants as a supplementary group,
+so use -G consultants.
+
+Mistake 4: Forgetting the percent sign in the sudoers rule.
+Incorrect:
+    consultants ALL=(ALL) ALL
+Correct:
+    %consultants ALL=(ALL) ALL
+The percent sign identifies a group in sudoers syntax.
+
+Mistake 5: Putting the sudoers file in the wrong location.
+Correction: Use the exact path:
+    /etc/sudoers.d/consultants
+
+Mistake 6: Leaving insecure permissions on the sudoers file.
+Correction: Use root ownership and mode 0440:
+    chown root:root /etc/sudoers.d/consultants
+    chmod 0440 /etc/sudoers.d/consultants
+
+Mistake 7: Copying the example date from the practical.
+Correction: Run date -d "+90 days" +%F on your own serverb machine and use
+that output for all three users.
+
+Mistake 8: Confusing password expiration with account expiration.
+Correction:
+    chage -M 15 USERNAME       Password maximum age
+    chage -E YYYY-MM-DD USERNAME  Account expiration date
+
+Mistake 9: Applying the 15-day policy to the wrong user.
+Correction: The special 15-day policy is only for consultant2:
+    chage -M 15 consultant2
+
+Mistake 10: Forgetting to force a password change at first login.
+Correction: Run chage -d 0 for each of the three accounts.
+
+Mistake 11: Thinking that PASS_MAX_DAYS updates every existing account.
+Correction: It supplies the default for newly created accounts. Use chage to
+modify an existing account's policy.
+
+Mistake 12: Expecting password characters to appear while typing.
+Correction: Linux password prompts usually show no characters, dots, or
+asterisks. Type the password and press Enter.
+
+Mistake 13: Exiting only once.
+Correction: First exit the root shell, then exit the SSH session.
+
+
+9. FINAL EXPECTED CONFIGURATION
+--------------------------------
+
+Group:
+    Group name: consultants
+    GID:        35000
+
+Users:
+    consultant1
+    consultant2
+    consultant3
+
+Supplementary group membership:
+    consultant1 -> consultants
+    consultant2 -> consultants
+    consultant3 -> consultants
+
+Sudoers file:
+    /etc/sudoers.d/consultants
+
+Sudoers rule:
+    %consultants  ALL=(ALL) ALL
+
+Default password policy in /etc/login.defs:
+    PASS_MAX_DAYS 30
+
+Initial passwords set by the administrator:
+    consultant1: redhat
+    consultant2: redhat
+    consultant3: redhat
+
+Password maximum age:
+    consultant1: 30 days
+    consultant2: 15 days
+    consultant3: 30 days
+
+Account expiration:
+    All three accounts: the date returned by date -d "+90 days" +%F
+
+First-login password change:
+    consultant1: required
+    consultant2: required
+    consultant3: required
+
+Final training commands on workstation:
+    lab grade users-review
+    lab finish users-review
+
+
+10. SHORT SUMMARY FOR REVISION
+------------------------------
+This practical teaches Linux local account administration.
+
+- A user is an individual account identified internally by a UID.
+- A group is a collection of users identified internally by a GID.
+- Every user has a primary group and may have supplementary groups.
+- useradd -G adds supplementary group membership.
+- groupadd -g creates a group with a specific GID.
+- /etc/login.defs stores account-creation and password-aging defaults.
+- PASS_MAX_DAYS 30 sets the default maximum password age for new users.
+- passwd USERNAME sets or changes a user's password.
+- sudo lets permitted users run commands with another user's privileges.
+- A line beginning with %groupname in sudoers applies to a group.
+- /etc/sudoers.d stores separate sudo policy files.
+- chage -E sets account expiration.
+- chage -M sets maximum password age.
+- chage -d 0 forces a password change at the next applicable login.
+- chage -l displays password-aging details.
+- id displays user and group IDs.
+- getent group checks group database information.
+- date -d "+90 days" +%F calculates the date 90 days ahead.
+
+Most important difference to remember:
+    chage -E = account expiration date
+    chage -M = maximum password age
+    chage -d 0 = force password change at next applicable login
+
+======================================================================
+END OF NOTES
+======================================================================

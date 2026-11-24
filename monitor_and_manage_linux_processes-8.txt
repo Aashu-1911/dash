@@ -1,0 +1,731 @@
+LAB: MONITOR AND MANAGE LINUX PROCESSES
+
+1. PURPOSE OF THE LAB
+
+This practical teaches you how to monitor Linux processes and manage
+them when they consume CPU resources.
+
+You will learn to: - Connect from workstation to serverb using SSH. -
+Create shell scripts that generate artificial CPU load. - Run programs
+in the background. - Monitor CPU and memory usage with the top
+command. - Change and save the top display configuration. - View
+background jobs and process states. - Suspend, resume, and terminate
+processes using signals. - Grade and finish the lab.
+
+IMPORTANT MACHINES AND USERS
+
+workstation : The machine where you initially log in and run the lab
+commands. serverb : The remote Linux machine where the test processes
+are created. student : The normal user used for most practical steps.
+root : The administrator account used for process-control commands.
+
+The lab is performed mainly on serverb. The lab start, grade, and finish
+commands are run from workstation as student.
+
+2. IMPORTANT CONCEPTS
+
+A. PROCESS A process is a program that is currently running. For
+example, when you run the top command, the shell script, or a text
+editor, Linux creates a process.
+
+Every process has a Process ID (PID), which is a unique number assigned
+by the operating system while that process exists.
+
+B. PID (PROCESS ID) PID identifies a particular running process.
+
+Example: process101 & [1] 1161
+
+Here: - 1 is the shell job number. - 1161 is the process ID (PID).
+
+A job number is used by the current shell to manage its jobs. A PID
+identifies the process in the operating system. They are not the same
+thing.
+
+C. CPU USAGE CPU usage indicates how much processor time a process is
+consuming. A process that performs many calculations can use more CPU.
+
+This lab creates scripts with different amounts of calculation so you
+can observe how CPU usage changes.
+
+D. MEMORY USAGE A process also uses RAM. The top command displays
+memory-related values such as VIRT, RES, SHR, and %MEM.
+
+-   VIRT: Virtual memory size associated with the process.
+-   RES: Resident memory currently held in physical RAM.
+-   SHR: Shared memory that may be shared with other processes.
+-   %MEM: Percentage of physical memory used by the process.
+
+E. FOREGROUND AND BACKGROUND A foreground process occupies the terminal
+while it runs. A background process runs without keeping the terminal
+occupied.
+
+Use an ampersand (&) at the end of a command to start it in the
+background.
+
+Example: process101 &
+
+F. SHELL JOBS The jobs command lists background or stopped jobs known to
+the current shell.
+
+Example: jobs
+
+The job numbers shown by jobs are not PIDs. Use ps or top when you need
+operating-system process information.
+
+G. LOAD AVERAGE The top header shows load averages for the last 1, 5,
+and 15 minutes.
+
+Load average represents the average number of tasks that are running or
+waiting for CPU time, plus certain tasks waiting in uninterruptible
+states. It is not the same as CPU percentage.
+
+A load average around 1 on a machine with one logical CPU indicates
+roughly one task’s worth of demand. On a machine with two logical CPUs,
+a load average of 1 is roughly half of the machine’s CPU capacity if the
+work is CPU-bound. Interpret load average in relation to the number of
+logical CPUs.
+
+Load average changes gradually. It may take a few minutes to reflect a
+change.
+
+H. LOGICAL CPU A logical CPU is a processing unit visible to the
+operating system. A system may show more logical CPUs than physical
+processor cores because of technologies such as simultaneous
+multithreading.
+
+The lab checks the number of logical CPUs using /proc/cpuinfo.
+
+I. PROCESS STATES Common process states shown by top or ps include: - R:
+Running or ready to run. - S: Interruptible sleep. - D: Uninterruptible
+sleep, commonly waiting for I/O. - T: Stopped or suspended. - Z: Zombie
+process; it has finished but its parent has not yet collected its exit
+status.
+
+In this lab, process101 is deliberately changed to state T using
+SIGSTOP.
+
+J. SIGNALS A signal is a notification sent to a process to request or
+control an action.
+
+Signals used in this lab: - SIGSTOP: Immediately stops/suspends a
+process. It cannot be ignored by the process. - SIGCONT: Continues a
+process that was stopped. - SIGTERM: Requests that a process terminate.
+This is the usual default signal sent by kill. - SIGKILL: Forces
+termination and cannot be caught or ignored.
+
+The lab uses pkill to send signals by process name.
+
+3. PREPARE THE LAB
+
+Log in to workstation as student. The lab password is student.
+
+Start the exercise:
+
+    lab start processes-review
+
+This prepares the environment and checks whether serverb is reachable.
+
+4. CONNECT TO SERVERB
+
+Open two terminal windows side by side. The lab calls them the LEFT
+terminal and the RIGHT terminal.
+
+In BOTH terminals, connect to serverb:
+
+    ssh student@serverb
+
+Enter the student account password if prompted.
+
+You should now see a prompt similar to:
+
+    [student@serverb ~]$
+
+Why use two terminals? - LEFT terminal: create and start scripts, and
+run process-management commands. - RIGHT terminal: keep top open so you
+can observe the processes continuously.
+
+5. CREATE THE FIRST CPU-LOAD SCRIPT
+
+In the LEFT terminal, create the directory:
+
+    mkdir /home/student/bin
+
+The mkdir command creates a directory. The -p option can be used when
+you want parent directories to be created as needed, but this lab uses
+mkdir.
+
+Create the script:
+
+    vim /home/student/bin/process101
+
+In Vim: 1. Press i to enter Insert mode. 2. Type the following script:
+
+    #!/bin/bash
+    while true
+    do
+        var=1
+        while (( var < 50000 ))
+        do
+            var=$(( var + 1 ))
+        done
+        sleep 1
+    done
+
+3.  Press Esc to leave Insert mode.
+4.  Type :wq and press Enter to save and quit.
+
+SCRIPT EXPLANATION
+
+#!/bin/bash This is the shebang. It tells Linux to run the script using
+Bash.
+
+while true Starts an infinite loop. The commands inside keep repeating
+until the process is stopped or terminated.
+
+var=1 Creates or sets the shell variable named var to 1.
+
+while (( var < 50000 )) Starts another loop that continues while var is
+less than 50000. The double parentheses allow arithmetic evaluation in
+Bash.
+
+var=$(( var + 1 )) Increases var by one on every iteration.
+
+sleep 1 Pauses the script for one second before the outer loop repeats.
+
+The repeated arithmetic calculations create artificial CPU activity. The
+sleep command prevents the script from calculating continuously without
+a pause. This is a demonstration script, not a useful production
+workload.
+
+Make the script executable:
+
+    chmod +x /home/student/bin/process101
+
+chmod changes file permissions. The +x option adds execute permission,
+allowing the file to be run as a program.
+
+6. OPEN TOP TO MONITOR PROCESSES
+
+In the RIGHT terminal, run:
+
+    top
+
+top is an interactive, real-time process-monitoring utility. It
+refreshes the process list and system information repeatedly.
+
+Important parts of the top display:
+
+HEADER: - Current time: system time. - up: how long the system has been
+running. - load average: 1-, 5-, and 15-minute load averages. - Tasks:
+total processes/tasks and their states. - %Cpu(s): CPU usage
+breakdown. - MiB Mem: physical memory information. - MiB Swap: swap
+memory information.
+
+PROCESS TABLE: - PID: process ID. - USER: owner of the process. - PR:
+scheduling priority. - NI: nice value. - VIRT: virtual memory. - RES:
+resident physical memory. - SHR: shared memory. - S: process state. -
+%CPU: CPU usage percentage. - %MEM: memory usage percentage. - TIME+:
+accumulated CPU time. - COMMAND: command or program name.
+
+Make the top terminal window as tall as possible so more processes are
+visible.
+
+7. CHECK LOGICAL CPU COUNT AND START PROCESS101
+
+In the LEFT terminal, run:
+
+    grep "model name" /proc/cpuinfo | wc -l
+
+Explanation: - /proc/cpuinfo contains information about CPUs visible to
+Linux. - grep “model name” selects lines containing the processor model
+name. - The pipe symbol (|) sends the output of grep to the next
+command. - wc -l counts the number of matching lines.
+
+The lab example displays 2, meaning the virtual machine has two logical
+CPUs.
+
+Now change to the script directory:
+
+    cd /home/student/bin
+
+Run the script in the background:
+
+    process101 &
+
+The ampersand (&) tells the shell to start the command in the
+background.
+
+Example output:
+
+    [1] 1161
+
+Here: - [1] is the shell job number. - 1161 is the process ID.
+
+8. OBSERVE PROCESS101 USING TOP
+
+Look at the RIGHT terminal where top is running.
+
+Find process101 in the COMMAND column. Note its PID and %CPU value. The
+lab example shows CPU usage around 10% to 15%. Exact values can vary
+depending on the virtual machine and system activity.
+
+Useful top keyboard shortcuts:
+
+SHIFT + M Sort processes by memory usage.
+
+m Toggle or display additional memory details, depending on the top
+version and current display mode.
+
+t Change the CPU/task display style. In this lab it is used to toggle
+the CPU/task summary display.
+
+SHIFT + P Sort processes by CPU usage. Use this to bring high-CPU
+processes toward the top of the list.
+
+q Quit top.
+
+Remember: Linux keyboard shortcuts in top are pressed while top is
+active. They are not typed as shell commands.
+
+9. CHANGE AND SAVE TOP DISPLAY SETTINGS
+
+Turn off bold display:
+
+    Press Shift + b
+
+Save the current top configuration:
+
+    Press Shift + w
+
+The lab stores the user’s top configuration in:
+
+    /home/student/.config/procps/toprc
+
+Verify that the file exists from the LEFT terminal:
+
+    ls -l /home/student/.config/procps/toprc
+
+Explanation: - ls lists files. - -l displays detailed information such
+as permissions, owner, size, and date. - The toprc file stores the top
+configuration for that user.
+
+In the RIGHT terminal: 1. Press q to exit top. 2. Run top again. 3.
+Check that the display settings are still applied.
+
+This verifies that the configuration was saved and reused after
+restarting top.
+
+10. CREATE PROCESS102 WITH MORE CPU WORK
+
+In the LEFT terminal, copy process101:
+
+    cp process101 process102
+
+cp copies files. The original process101 file remains unchanged.
+
+Edit the new script:
+
+    vim process102
+
+Change the loop limit from 50000 to 100000:
+
+    #!/bin/bash
+    while true
+    do
+        var=1
+        while (( var < 100000 ))
+        do
+            var=$(( var + 1 ))
+        done
+        sleep 1
+    done
+
+Save and exit Vim using Esc, then :wq and Enter.
+
+Start process102 in the background:
+
+    process102 &
+
+Check the jobs:
+
+    jobs
+
+You should see process101 and process102 listed as Running.
+
+The jobs command reports jobs known to the current shell. It is useful
+for checking the background tasks started from this terminal.
+
+11. COMPARE CPU USAGE OF PROCESS101 AND PROCESS102
+
+In the RIGHT terminal, observe top.
+
+Press Shift + p if needed to sort by CPU usage.
+
+The lab expects process102 to use more CPU than process101. Its example
+shows the two processes together using approximately 25% to 35% CPU.
+
+Why does process102 use more CPU? - process101 counts up to 50000 in
+each loop. - process102 counts up to 100000 in each loop. - process102
+performs more arithmetic operations during each loop cycle.
+
+The exact CPU percentage depends on the virtual machine, number of CPUs,
+system load, and timing. Treat the lab’s percentages as approximate
+examples, not guaranteed values.
+
+12. CREATE PROCESS103 TO INCREASE SYSTEM LOAD
+
+First, observe the load average in top. The lab expects it to be below 1
+before starting process103.
+
+In the LEFT terminal, copy process101:
+
+    cp process101 process103
+
+Edit process103:
+
+    vim process103
+
+Change the loop limit to 800000:
+
+    #!/bin/bash
+    while true
+    do
+        var=1
+        while (( var < 800000 ))
+        do
+            var=$(( var + 1 ))
+        done
+        sleep 1
+    done
+
+Save and exit:
+
+    Press Esc
+    :wq
+    Press Enter
+
+Start process103:
+
+    process103 &
+
+Check all jobs:
+
+    jobs
+
+You should see process101, process102, and process103 as Running.
+
+In the RIGHT terminal, observe top. Press Shift + p if required. The lab
+example shows process103 using approximately 60% to 85% CPU and the load
+average eventually rising above 1.
+
+Why is process103 heavier? It performs up to 800000 arithmetic loop
+iterations in each cycle, which is many more calculations than
+process101 or process102.
+
+IMPORTANT: Load average is calculated over time. It may take a few
+minutes to rise. Do not expect it to jump immediately after starting
+process103.
+
+13. SWITCH TO ROOT
+
+In the LEFT terminal, switch to the root account:
+
+    su -
+
+Enter the root password shown in the lab environment:
+
+    redhat
+
+The prompt should change from something like:
+
+    [student@serverb bin]$
+
+to:
+
+    [root@serverb ~]#
+
+The # prompt commonly indicates a root shell. Root has administrative
+permissions and can manage processes owned by other users.
+
+Use root carefully. Commands run as root can affect the entire system.
+
+14. SUSPEND PROCESS101
+
+Run:
+
+    pkill -SIGSTOP process101
+
+Explanation: - pkill finds processes by name or other selected
+criteria. - -SIGSTOP sends the SIGSTOP signal. - process101 is the
+process name being targeted.
+
+SIGSTOP suspends the process immediately. It does not terminate or
+delete it. The process remains in memory but does not continue
+executing.
+
+In the RIGHT terminal, observe top. process101 should no longer consume
+CPU while it is stopped.
+
+15. VERIFY THE PROCESS STATE USING PS
+
+In the LEFT terminal, run:
+
+    ps jT
+
+ps displays process information. The j option requests
+job-control-related columns, and T selects processes associated with the
+terminal.
+
+Look for process101 in the output.
+
+Its STAT column should contain:
+
+    T
+
+T means the process is stopped or suspended.
+
+Other columns in the lab output include: - PPID: parent process ID. -
+PID: process ID. - PGID: process group ID. - SID: session ID. - TTY:
+terminal associated with the process. - TPGID: foreground process group
+ID for the terminal. - STAT: process state. - UID: user ID. - TIME:
+accumulated CPU time. - COMMAND: command that started the process.
+
+The process is still present even though it is not running. This is the
+difference between suspending a process and terminating it.
+
+16. RESUME PROCESS101
+
+Run:
+
+    pkill -SIGCONT process101
+
+SIGCONT tells a stopped process to continue execution.
+
+Return to top in the RIGHT terminal. process101 should appear as active
+again and should begin consuming CPU time.
+
+Signal summary: SIGSTOP = suspend/stop a process SIGCONT =
+continue/resume a stopped process
+
+17. TERMINATE ALL THREE PROCESSES
+
+In the LEFT terminal, run:
+
+    pkill process101
+    pkill process102
+    pkill process103
+
+When no signal is specified, pkill normally sends SIGTERM.
+
+SIGTERM asks the process to terminate. It gives a program an opportunity
+to finish cleanly or perform cleanup. These simple scripts do not define
+special cleanup behavior, so they terminate.
+
+In the RIGHT terminal, check top. The three process names should
+disappear.
+
+Do not confuse these commands: - SIGSTOP: pause a process. - SIGCONT:
+resume a paused process. - SIGTERM: request process termination. -
+SIGKILL: force termination if a process will not stop normally.
+
+18. EXIT SERVERB AND RETURN TO WORKSTATION
+
+In the LEFT terminal, exit the root shell:
+
+    exit
+
+This returns to the student shell. The shell may print messages showing
+that the background jobs were terminated.
+
+In the RIGHT terminal, quit top:
+
+    Press q
+
+Then exit the SSH session:
+
+    exit
+
+You should return to the workstation prompt:
+
+    [student@workstation ~]$
+
+19. GRADE THE LAB
+
+Run this command on workstation as student:
+
+    lab grade processes-review
+
+The grading script checks whether the required tasks were completed.
+
+If it reports a failure: 1. Read the message carefully. 2. Return to the
+relevant step. 3. Correct the issue. 4. Run the grading command again.
+
+20. FINISH THE LAB
+
+After the grade is successful, run:
+
+    lab finish processes-review
+
+This cleans up or resets resources used by the exercise so they do not
+interfere with later labs.
+
+Run this command from workstation as student.
+
+21. IMPORTANT COMMANDS - QUICK REVISION
+
+    lab start processes-review
+        Prepare the lab environment.
+
+    ssh student@serverb
+        Connect to serverb as student.
+
+    mkdir /home/student/bin
+        Create the bin directory.
+
+    vim /home/student/bin/process101
+        Create or edit the script using Vim.
+
+    chmod +x /home/student/bin/process101
+        Add execute permission.
+
+    top
+        Monitor processes and system resource usage.
+
+    grep "model name" /proc/cpuinfo | wc -l
+        Count logical CPU entries shown in /proc/cpuinfo.
+
+    cd /home/student/bin
+        Change to the script directory.
+
+    process101 &
+        Run process101 in the background.
+
+    cp process101 process102
+        Copy process101 to process102.
+
+    jobs
+        List jobs known to the current shell.
+
+    ls -l /home/student/.config/procps/toprc
+        Check the saved top configuration file.
+
+    su -
+        Switch to the root login shell.
+
+    pkill -SIGSTOP process101
+        Suspend process101.
+
+    ps jT
+        Display terminal-related process/job information.
+
+    pkill -SIGCONT process101
+        Resume process101.
+
+    pkill process101
+        Request termination of process101.
+
+    exit
+        Exit the current shell or SSH session.
+
+    lab grade processes-review
+        Grade the lab.
+
+    lab finish processes-review
+        Finish and clean up the lab.
+
+22. TOP KEYBOARD SHORTCUTS - QUICK REVISION
+
+    Shift + m
+        Sort by memory usage.
+
+    m
+        Toggle additional memory display/details.
+
+    t
+        Toggle CPU/task summary display style.
+
+    Shift + p
+        Sort by CPU usage.
+
+    Shift + b
+        Toggle bold display.
+
+    Shift + w
+        Save the current top configuration.
+
+    q
+        Quit top.
+
+23. COMMON DIFFERENCES TO REMEMBER
+
+A. jobs vs top vs ps - jobs: lists jobs started or controlled by the
+current shell. - top: continuously updates process and system-resource
+information. - ps: takes a snapshot of process information when the
+command is run.
+
+B. Job number vs PID - Job number: shell-specific identifier, such as
+[1]. - PID: operating-system process identifier, such as 1161.
+
+C. Suspend vs terminate - Suspend: process remains present but stops
+executing; state T. - Terminate: process exits and is removed from the
+active process list.
+
+D. SIGSTOP vs SIGTERM - SIGSTOP pauses a process and cannot be caught or
+ignored. - SIGTERM requests that a process terminate and can be handled
+by the program.
+
+E. CPU percentage vs load average - CPU percentage shows processor use
+over the sampling interval. - Load average shows average system task
+demand over 1, 5, and 15 minutes. They measure different things.
+
+24. TROUBLESHOOTING TIPS
+
+1.  “command not found” when running a script If the current directory
+    is not in PATH, run the script using:
+
+    ./process101 &
+
+The ./ means execute the file from the current directory.
+
+The lab uses process101 directly after changing to /home/student/bin,
+which assumes that this directory is configured in the lab user’s PATH.
+
+2.  Permission denied Check the execute permission:
+
+    ls -l process101
+
+If needed:
+
+    chmod +x process101
+
+3.  Process does not appear near the top of top Press Shift + p to sort
+    by CPU usage. The process may be farther down the list if top is
+    sorted by another column.
+
+4.  Load average has not increased yet Wait a few minutes. Load average
+    is averaged over time and does not update instantaneously.
+
+5.  Process is stopped Use SIGCONT to resume it:
+
+    pkill -SIGCONT process101
+
+6.  Process still appears after termination Check the process name and
+    whether it is still present. The lab’s pkill commands should
+    terminate the three scripts. If a process remains, inspect its PID
+    and state before taking further action.
+
+7.  FINAL UNDERSTANDING
+
+In this practical, you create three Bash scripts that perform increasing
+amounts of arithmetic work. You run them in the background and use top
+to observe their CPU and memory usage.
+
+You then learn how to: - Sort processes by CPU or memory usage. - Save
+top display settings. - Identify jobs and process IDs. - Inspect process
+states using ps. - Suspend a process with SIGSTOP. - Resume it with
+SIGCONT. - Terminate processes with pkill. - Grade and finish the
+exercise.
+
+The most important practical idea is that Linux provides tools to
+monitor resource usage and control processes without restarting the
+whole machine.

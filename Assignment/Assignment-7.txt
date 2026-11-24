@@ -1,0 +1,24 @@
+lab start processes-review                  # Verifies serverb reachability and prepares the lab environment.
+ssh student@serverb                         # Logs into serverb as student (run in both left and right terminals).
+mkdir /home/student/bin                     # Creates the bin directory in student's home directory (left terminal).
+vim /home/student/bin/process101            # Creates the process101 script looping up to 50000 with a 1s sleep.
+chmod +x /home/student/bin/process101       # Makes the process101 script executable.
+top                                         # Launches the interactive process monitor (run in right terminal).
+grep "model name" /proc/cpuinfo | wc -l     # Counts the number of logical CPUs on the system (left terminal).
+cd /home/student/bin                        # Changes into /home/student/bin (left terminal).
+process101 &                                # Starts process101 in the background and prints its job/PID.
+ls -l /home/student/.config/procps/toprc    # Confirms top's saved config file exists after pressing Shift+w in top.
+cp process101 process102                    # Copies process101 to create process102.
+vim process102                              # Edits process102 to increase the loop limit from 50000 to 100000.
+process102 &                                # Starts process102 in the background.
+jobs                                        # Lists active background jobs in the current shell.
+cp process101 process103                    # Copies process101 to create process103.
+vim process103                              # Edits process103 to increase the loop limit to 800000.
+process103 &                                # Starts process103 in the background to raise load average above 1.
+jobs                                        # Confirms all three background jobs are running.
+su -                                        # Switches to the root user shell (password: redhat).
+pkill -SIGSTOP process101                   # Sends SIGSTOP to suspend process101 (moves it to T state).
+ps jT                                       # Displays jobs and process states, confirming process101 is T.
+pkill -SIGCONT process101                  # Sends SIGCONT to resume the suspended process101 process.
+lab grade processes-review                  # Grades the lab exercise on workstation and reports any failures.
+lab finish processes-review                 # Cleans up and completes the lab exercise on workstation.

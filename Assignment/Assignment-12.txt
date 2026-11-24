@@ -1,0 +1,21 @@
+lab start software-review                                                                                                     # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                                                                                            # Logs into serverb as the student user via SSH.
+sudo -i                                                                                                                        # Switches to an interactive root login shell (password: student).
+cat << 'EOF' > /etc/yum.repos.d/errata.repo                                                                                    # Creates the errata repository configuration file.
+[errata]
+name=Red Hat Updates
+baseurl=http://content.example.com/rhel9.3/x86_64/rhcsa-practice/errata
+enabled=1
+gpgcheck=0
+EOF
+dnf list rht-system                                                                                                            # Lists available rht-system packages from configured repositories.
+dnf install rht-system                                                                                                         # Installs the rht-system package.
+dnf list cups                                                                                                                  # Checks installed cups package details.
+dnf remove cups.x86_64                                                                                                         # Removes cups to prevent connecting to a paper printer.
+exit                                                                                                                           # Exits the root shell back to student on serverb.
+rpm -q -p rhcsa-script-1.0.0-1.noarch.rpm -i                                                                                   # Queries metadata and info from the local RPM package file.
+sudo dnf install rhcsa-script-1.0.0-1.noarch.rpm                                                                               # Installs the local rhcsa-script RPM package using root privileges.
+rpm -q rhcsa-script                                                                                                            # Verifies that the rhcsa-script package is installed.
+exit                                                                                                                           # Closes the SSH session and returns to workstation.
+lab grade software-review                                                                                                      # Grades the lab exercise and reports any failures.
+lab finish software-review                                                                                                     # Cleans up and completes the lab exercise.

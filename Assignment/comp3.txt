@@ -1,0 +1,12 @@
+lab start rhcsa-rh124-review3                         # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                   # Logs into serverb as the student user via SSH.
+ssh-keygen                                            # Generates SSH keys (save as /home/student/.ssh/review3_key with no passphrase).
+ssh-copy-id -i .ssh/review3_key.pub student@servera   # Copies the review3_key public key to student@servera for key-based auth.
+ssh -i .ssh/review3_key student@servera               # Verifies passwordless SSH login to servera using the review3_key private key.
+exit                                                  # Exits the SSH session on servera and returns to serverb.
+sudo vim /etc/ssh/sshd_config                         # Opens sshd_config on serverb to set "PermitRootLogin no" and "PasswordAuthentication no".
+sudo systemctl reload sshd.service                    # Reloads sshd on serverb to apply the root and password authentication restrictions.
+sudo dnf install zsh                                  # Installs the zsh package on serverb.
+exit                                                  # Closes the SSH session on serverb and returns to workstation.
+lab grade rhcsa-rh124-review3                         # Grades the lab exercise on workstation and reports any failures.
+lab finish rhcsa-rh124-review3                        # Cleans up and completes the lab exercise on workstation.

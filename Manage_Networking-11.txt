@@ -1,0 +1,1049 @@
+============================================================
+LAB: MANAGE NETWORKING
+RED HAT ENTERPRISE LINUX (RHEL)
+============================================================
+
+1. OBJECTIVE
+------------
+
+The objective of this practical is to configure networking settings on a Red Hat Enterprise Linux server.
+
+In this practical, we will:
+
+1. Identify network interfaces available on the server.
+2. Identify the currently active network connections.
+3. Create a new network connection with static IPv4 configuration.
+4. Configure automatic connection startup.
+5. Assign multiple IPv4 addresses to one network interface.
+6. Configure hostname resolution using the /etc/hosts file.
+7. Reboot the server and verify network connectivity.
+
+We will use the nmcli command-line utility to manage network connections.
+
+
+2. IMPORTANT NETWORKING CONCEPTS
+--------------------------------
+
+A. What is Networking?
+
+Networking is the process of connecting two or more computers so that they can communicate and exchange information.
+
+For example:
+- Your workstation communicates with serverb.
+- A Linux server communicates with other servers.
+- A computer accesses the internet through a gateway.
+
+B. What is an IP Address?
+
+An IP address is a unique logical address assigned to a device on a network.
+
+Example:
+172.25.250.11
+
+It helps identify a device and allows other devices to communicate with it.
+
+There are two major IP versions:
+
+1. IPv4
+   Example: 192.168.1.10
+
+2. IPv6
+   Example: 2001:db8::1
+
+This practical uses IPv4.
+
+C. What is a Static IP Address?
+
+A static IP address is an IP address manually configured on a network interface.
+
+It does not automatically change through DHCP.
+
+Example:
+172.25.250.11/24
+
+Static IP addresses are commonly used for servers because other systems need a consistent address to communicate with them.
+
+D. What is DHCP?
+
+DHCP stands for Dynamic Host Configuration Protocol.
+
+It automatically assigns network configuration to a device.
+
+DHCP can provide:
+- IP address
+- Subnet mask
+- Default gateway
+- DNS server
+
+Difference:
+
+Static IP:
+Manually configured by the administrator.
+
+DHCP:
+Automatically assigned by a DHCP server.
+
+E. What is a Subnet Mask?
+
+A subnet mask determines which portion of an IP address represents the network and which portion represents the host.
+
+Example:
+172.25.250.11/24
+
+Here:
+/24 means the subnet mask is:
+
+255.255.255.0
+
+F. What is a Gateway?
+
+A gateway is a device that allows communication between different networks.
+
+Example:
+172.25.250.254
+
+When a server wants to communicate with another network, it generally sends traffic through its default gateway.
+
+G. What is DNS?
+
+DNS stands for Domain Name System.
+
+It converts domain names into IP addresses.
+
+Example:
+
+serverb.lab.example.com -> 172.25.250.11
+
+Without DNS, users would generally need to remember IP addresses instead of domain names.
+
+H. What is a Network Interface?
+
+A network interface is the hardware or virtual component through which a computer connects to a network.
+
+Examples:
+- eth0
+- eth1
+- ens33
+- enp0s3
+
+A server can have multiple network interfaces.
+
+I. What is a MAC Address?
+
+MAC stands for Media Access Control.
+
+It is a hardware-level address associated with a network interface.
+
+Example:
+52:54:00:00:fa:0b
+
+In this practical, we use the MAC address to identify the correct network interface.
+
+J. What is NetworkManager?
+
+NetworkManager is a Linux service that manages network connections.
+
+It handles:
+- Network interfaces
+- IP address configuration
+- DNS configuration
+- Gateway configuration
+- Connection profiles
+- Automatic connection startup
+
+K. What is nmcli?
+
+nmcli stands for NetworkManager Command Line Interface.
+
+It is a command-line utility used to manage network configurations.
+
+Using nmcli, we can:
+- Display network connections.
+- Create network connections.
+- Modify network settings.
+- Activate and deactivate connections.
+- Configure static IP addresses.
+- Configure DNS and gateways.
+
+
+3. LAB ENVIRONMENT PREPARATION
+-------------------------------
+
+Before starting the practical, prepare the lab environment.
+
+Command:
+
+lab start net-review
+
+Explanation:
+
+- lab: Lab management command.
+- start: Prepares the practical environment.
+- net-review: Name of this particular lab.
+
+This command prepares the required virtual machines and resources.
+
+IMPORTANT:
+
+Execute this command on the workstation as the student user.
+
+
+4. CONNECT TO SERVERB AND SWITCH TO ROOT
+-----------------------------------------
+
+Step 1: Connect to serverb.
+
+Command:
+
+ssh student@serverb
+
+Explanation:
+
+- ssh: Secure Shell command.
+- student: Username of the remote system.
+- serverb: Hostname of the remote Linux server.
+
+This command establishes a secure connection between workstation and serverb.
+
+Step 2: Switch to root user.
+
+Command:
+
+sudo -i
+
+Explanation:
+
+- sudo: Executes commands with elevated privileges.
+- -i: Opens a login shell as the root user.
+
+Root access is required because network configuration files and system networking settings need administrative privileges.
+
+After executing this command, the prompt changes from:
+
+[student@serverb ~]$
+
+To:
+
+[root@serverb ~]#
+
+The # symbol generally indicates that you are working as root.
+
+
+5. IDENTIFY NETWORK INTERFACES
+-------------------------------
+
+Before creating a network connection, we must identify the correct network interface.
+
+Command:
+
+ip link
+
+Explanation:
+
+The ip command is used to display and manage network interfaces and IP configuration.
+
+The link option displays network interface information.
+
+Example output:
+
+1: lo
+2: eth0
+3: eth1
+
+Explanation:
+
+lo:
+Loopback interface. It is used for communication within the same machine.
+
+eth0:
+First Ethernet network interface.
+
+eth1:
+Second Ethernet network interface.
+
+We need to identify the interface having this MAC address:
+
+52:54:00:00:fa:0b
+
+Example:
+
+link/ether 52:54:00:00:fa:0b
+
+In this practical, the correct interface is:
+
+eth0
+
+IMPORTANT:
+
+Your interface name might be different.
+
+Always identify the interface using the given MAC address instead of blindly assuming eth0.
+
+
+6. IDENTIFY ACTIVE NETWORK CONNECTIONS
+---------------------------------------
+
+Command:
+
+nmcli con show --active
+
+Explanation:
+
+- nmcli: NetworkManager command-line utility.
+- con: Short form of connection.
+- show: Displays connection information.
+- --active: Displays only currently active connections.
+
+Example output:
+
+NAME          TYPE      DEVICE
+System eth0   ethernet  eth0
+System eth1   ethernet  eth1
+lo            loopback  lo
+
+Explanation:
+
+NAME:
+Name of the connection profile.
+
+TYPE:
+Type of network connection.
+
+DEVICE:
+Network interface associated with that connection.
+
+In this practical:
+
+Connection name = System eth0
+Interface name = eth0
+
+IMPORTANT:
+
+A connection profile name and network interface name are not the same thing.
+
+Example:
+
+Connection name: System eth0
+Interface name: eth0
+
+We will create a new connection named lab.
+
+
+7. CREATE A STATIC NETWORK CONNECTION
+--------------------------------------
+
+Our required network configuration:
+
+Connection Name: lab
+Interface Name: eth0
+IP Address: 172.25.250.11/24
+Gateway: 172.25.250.254
+DNS: 172.25.250.254
+
+Command:
+
+nmcli con add con-name lab ifname eth0 type ethernet ipv4.method manual ipv4.dns '172.25.250.254' ipv4.addresses '172.25.250.11/24' ipv4.gateway '172.25.250.254'
+
+Explanation of every parameter:
+
+nmcli:
+NetworkManager command-line utility.
+
+con:
+Specifies that we are working with network connections.
+
+add:
+Creates a new connection profile.
+
+con-name lab:
+Sets the connection profile name to lab.
+
+ifname eth0:
+Associates the connection with the eth0 network interface.
+
+type ethernet:
+Specifies that the connection type is Ethernet.
+
+ipv4.method manual:
+Configures IPv4 manually instead of using DHCP.
+
+ipv4.dns:
+Specifies the DNS server address.
+
+ipv4.addresses:
+Specifies the static IPv4 address and subnet prefix.
+
+ipv4.gateway:
+Specifies the default gateway.
+
+After execution, NetworkManager creates a new connection profile named lab.
+
+Expected message:
+
+Connection 'lab' successfully added.
+
+IMPORTANT CONCEPT:
+
+ipv4.method manual
+
+This setting is important because we want to configure a static IP address.
+
+Other common methods:
+
+auto:
+Uses DHCP to obtain an IPv4 configuration automatically.
+
+manual:
+Uses manually configured IPv4 settings.
+
+disabled:
+Disables IPv4 configuration for that connection.
+
+
+8. CONFIGURE AUTOMATIC CONNECTION STARTUP
+-------------------------------------------
+
+We need to configure the new lab connection to start automatically.
+
+We also need to prevent the old System eth0 connection from starting automatically.
+
+A. Enable automatic startup for lab.
+
+Command:
+
+nmcli con mod "lab" connection.autoconnect yes
+
+Explanation:
+
+con mod:
+Modifies an existing connection profile.
+
+"lab":
+Specifies the connection profile.
+
+connection.autoconnect yes:
+Enables automatic activation of the connection when NetworkManager determines it should be activated.
+
+B. Disable automatic startup for System eth0.
+
+Command:
+
+nmcli con mod "System eth0" connection.autoconnect no
+
+Explanation:
+
+This prevents the old System eth0 profile from automatically activating.
+
+Why do we do this?
+
+Because we have created a new connection named lab for eth0.
+
+If both profiles are configured to start automatically, NetworkManager might select an unintended connection profile.
+
+Therefore:
+
+lab = Automatic startup enabled.
+
+System eth0 = Automatic startup disabled.
+
+IMPORTANT:
+
+The connection.autoconnect property controls whether a connection profile is eligible for automatic activation.
+
+
+9. ADD A SECOND IP ADDRESS
+---------------------------
+
+Now we need to assign another IP address to the same network interface.
+
+Required second IP address:
+
+10.0.1.1/24
+
+Command:
+
+nmcli con mod "lab" +ipv4.addresses '10.0.1.1/24'
+
+Explanation:
+
+nmcli:
+NetworkManager utility.
+
+con mod:
+Modifies an existing connection profile.
+
+"lab":
+Specifies the connection we want to modify.
+
++ipv4.addresses:
+Adds another IPv4 address without replacing the existing addresses.
+
+'10.0.1.1/24':
+The additional static IP address.
+
+IMPORTANT DIFFERENCE:
+
+ipv4.addresses:
+
+Sets or replaces the configured IPv4 address list.
+
++ipv4.addresses:
+
+Adds another IPv4 address to the existing list.
+
+For example, after this command, the lab connection has:
+
+Primary IP:
+172.25.250.11/24
+
+Secondary IP:
+10.0.1.1/24
+
+Both IP addresses are configured on the same network connection.
+
+This is called assigning multiple IP addresses to one network interface.
+
+Next command:
+
+nmcli con reload
+
+Explanation:
+
+Reloads connection profiles from the configuration files.
+
+It makes NetworkManager reread the saved connection configurations.
+
+NOTE:
+
+Reloading a connection profile does not necessarily activate its new settings on the interface. In this lab, the reboot in a later step activates the configured profile.
+
+
+10. CONFIGURE THE /etc/hosts FILE
+----------------------------------
+
+We need to associate the second IP address with the name:
+
+private
+
+For this purpose, we modify the /etc/hosts file.
+
+What is /etc/hosts?
+
+It is a local hostname resolution file in Linux.
+
+It maps IP addresses to hostnames.
+
+For example:
+
+10.0.1.1 private
+
+This means that the system can resolve the hostname private to the IP address 10.0.1.1 using its local hosts file.
+
+Command:
+
+echo "10.0.1.1 private" >> /etc/hosts
+
+Explanation:
+
+echo:
+Displays the specified text.
+
+"10.0.1.1 private":
+The entry that we want to add.
+
+>>:
+Appends the text to the end of an existing file.
+
+ /etc/hosts:
+The file where local hostname mappings are stored.
+
+IMPORTANT DIFFERENCE:
+
+>  = Replaces the existing file content.
+
+>> = Appends content without removing existing lines.
+
+We use >> because we do not want to overwrite the existing hosts file.
+
+To view the file:
+
+cat /etc/hosts
+
+Expected entry:
+
+10.0.1.1 private
+
+To test hostname resolution:
+
+getent hosts private
+
+Expected result:
+
+10.0.1.1 private
+
+IMPORTANT:
+
+The /etc/hosts file provides local name resolution. It does not create a DNS record on an external DNS server.
+
+
+11. REBOOT THE SERVER
+---------------------
+
+Command:
+
+systemctl reboot
+
+Explanation:
+
+systemctl:
+Command-line utility used to manage systemd and system services.
+
+reboot:
+Requests the system to reboot.
+
+Why do we reboot?
+
+We want the server to restart and initialize its networking configuration.
+
+During startup:
+
+1. Linux boots.
+2. NetworkManager starts.
+3. NetworkManager identifies available network interfaces.
+4. It activates eligible connection profiles.
+5. The lab connection should start automatically.
+6. The configured network settings become active.
+
+After reboot, the SSH connection will close automatically.
+
+Expected message:
+
+Connection to serverb closed by remote host.
+
+This is normal because the server is restarting.
+
+
+12. VERIFY NETWORK CONNECTIVITY
+--------------------------------
+
+After rebooting, return to the workstation.
+
+We need to check whether serverb is reachable.
+
+Command:
+
+ping -c3 serverb
+
+Explanation:
+
+ping:
+Tests network connectivity between two systems.
+
+-c3:
+Sends exactly three ICMP echo request packets.
+
+serverb:
+Hostname of the remote server.
+
+Expected output:
+
+PING serverb.lab.example.com (172.25.250.11)
+
+64 bytes from 172.25.250.11
+
+64 bytes from 172.25.250.11
+
+64 bytes from 172.25.250.11
+
+3 packets transmitted, 3 received, 0% packet loss
+
+Explanation:
+
+3 packets transmitted:
+Three requests were sent.
+
+3 received:
+All three requests received replies.
+
+0% packet loss:
+No packets were lost.
+
+This indicates that serverb is reachable through the network.
+
+NOTE:
+
+A successful ping verifies network reachability, but it does not independently verify every configuration requirement.
+
+Additional verification commands on serverb:
+
+A. Check IP addresses:
+
+ip addr show eth0
+
+B. Check active connections:
+
+nmcli con show --active
+
+C. Check saved connection settings:
+
+nmcli con show lab
+
+D. Check default route:
+
+ip route
+
+E. Check DNS configuration:
+
+cat /etc/resolv.conf
+
+F. Check local hostname mapping:
+
+getent hosts private
+
+
+13. EVALUATE THE LAB
+---------------------
+
+After completing the configuration, return to the workstation.
+
+Command:
+
+lab grade net-review
+
+Explanation:
+
+- lab: Lab management utility.
+- grade: Evaluates the practical.
+- net-review: Name of the practical.
+
+The grading system checks whether the required networking configuration has been completed correctly.
+
+If any error is reported:
+
+1. Read the error carefully.
+2. Connect to serverb again.
+3. Switch to root.
+4. Correct the configuration.
+5. Run the grading command again.
+
+Repeat until the lab is successfully graded.
+
+
+14. FINISH THE LAB
+-------------------
+
+After successful evaluation, execute:
+
+lab finish net-review
+
+Explanation:
+
+This command completes the practical and cleans up or resets the lab environment as required by the course platform.
+
+Why is this important?
+
+It ensures that resources from the current exercise do not interfere with upcoming exercises.
+
+
+15. IMPORTANT COMMANDS SUMMARY
+--------------------------------
+
+1. Start the lab:
+
+lab start net-review
+
+2. Connect to the server:
+
+ssh student@serverb
+
+3. Switch to root:
+
+sudo -i
+
+4. Display network interfaces:
+
+ip link
+
+5. Display active connections:
+
+nmcli con show --active
+
+6. Create a static connection:
+
+nmcli con add con-name lab ifname eth0 type ethernet ipv4.method manual ipv4.dns '172.25.250.254' ipv4.addresses '172.25.250.11/24' ipv4.gateway '172.25.250.254'
+
+7. Enable automatic startup:
+
+nmcli con mod "lab" connection.autoconnect yes
+
+8. Disable automatic startup:
+
+nmcli con mod "System eth0" connection.autoconnect no
+
+9. Add a second IP address:
+
+nmcli con mod "lab" +ipv4.addresses '10.0.1.1/24'
+
+10. Reload connection profiles:
+
+nmcli con reload
+
+11. Add hostname mapping:
+
+echo "10.0.1.1 private" >> /etc/hosts
+
+12. View hosts file:
+
+cat /etc/hosts
+
+13. Test hostname resolution:
+
+getent hosts private
+
+14. Reboot the system:
+
+systemctl reboot
+
+15. Test network connectivity:
+
+ping -c3 serverb
+
+16. Check IP addresses:
+
+ip addr show eth0
+
+17. Check routing table:
+
+ip route
+
+18. Grade the lab:
+
+lab grade net-review
+
+19. Finish the lab:
+
+lab finish net-review
+
+
+16. IMPORTANT DIFFERENCES TO REMEMBER
+--------------------------------------
+
+1. IP ADDRESS vs MAC ADDRESS
+
+IP Address:
+Logical network address.
+
+MAC Address:
+Hardware-level network interface address.
+
+2. CONNECTION NAME vs INTERFACE NAME
+
+Connection name:
+Name of a NetworkManager connection profile.
+
+Interface name:
+Name of the actual network interface.
+
+Example:
+Connection = System eth0
+Interface = eth0
+
+3. STATIC IP vs DHCP
+
+Static:
+Manually assigned IP address.
+
+DHCP:
+Automatically assigned IP address.
+
+4. > vs >>
+
+>:
+Overwrites file content.
+
+>>:
+Appends content to a file.
+
+5. ipv4.addresses vs +ipv4.addresses
+
+ipv4.addresses:
+Sets the address list.
+
++ipv4.addresses:
+Adds an additional address to the existing list.
+
+6. DNS vs /etc/hosts
+
+DNS:
+A network-based hostname resolution service.
+
+ /etc/hosts:
+A local file containing IP-to-hostname mappings.
+
+7. ip link vs ip addr
+
+ip link:
+Displays network interface information, including MAC addresses and link status.
+
+ip addr:
+Displays IP addresses assigned to network interfaces.
+
+
+17. VIVA QUESTIONS AND ANSWERS
+--------------------------------
+
+Q1. What is nmcli?
+
+Answer:
+nmcli is a command-line utility used to manage network connections through NetworkManager.
+
+Q2. What is NetworkManager?
+
+Answer:
+NetworkManager is a Linux service responsible for managing network connections and configurations.
+
+Q3. What is a static IP address?
+
+Answer:
+A static IP address is manually assigned to a network interface and does not depend on DHCP for its assignment.
+
+Q4. What is DHCP?
+
+Answer:
+DHCP stands for Dynamic Host Configuration Protocol. It automatically assigns IP addresses and other network settings to devices.
+
+Q5. What is a gateway?
+
+Answer:
+A gateway is a device that allows communication between different networks.
+
+Q6. What is DNS?
+
+Answer:
+DNS stands for Domain Name System. It translates domain names into IP addresses.
+
+Q7. What is the purpose of the ip link command?
+
+Answer:
+It displays network interface information such as interface names, MAC addresses and link status.
+
+Q8. What is the purpose of nmcli con show --active?
+
+Answer:
+It displays currently active NetworkManager connections.
+
+Q9. What is the purpose of ipv4.method manual?
+
+Answer:
+It configures the connection to use manually assigned IPv4 settings instead of obtaining them through DHCP.
+
+Q10. What is connection.autoconnect?
+
+Answer:
+It determines whether a connection profile should be automatically activated when NetworkManager starts or when suitable connectivity becomes available.
+
+Q11. What is the purpose of +ipv4.addresses?
+
+Answer:
+It adds an additional IP address without replacing the existing IPv4 addresses in the connection profile.
+
+Q12. Can one network interface have multiple IP addresses?
+
+Answer:
+Yes. A single network interface can have multiple IPv4 or IPv6 addresses.
+
+Q13. What is the purpose of /etc/hosts?
+
+Answer:
+It stores local mappings between IP addresses and hostnames.
+
+Q14. What does ping do?
+
+Answer:
+It checks network reachability by sending ICMP echo requests to another device.
+
+Q15. What does -c3 mean in ping?
+
+Answer:
+It sends exactly three ping packets.
+
+Q16. What is the difference between > and >>?
+
+Answer:
+> overwrites file content, whereas >> appends content to the end of a file.
+
+Q17. What does systemctl reboot do?
+
+Answer:
+It requests the system to restart.
+
+Q18. What is the loopback interface?
+
+Answer:
+The loopback interface is a virtual network interface used for communication within the same system. Its commonly used IPv4 address is 127.0.0.1.
+
+Q19. What does /24 mean in an IPv4 address?
+
+Answer:
+It represents a network prefix length of 24 bits, equivalent to subnet mask 255.255.255.0.
+
+Q20. Why do we disable autoconnect for System eth0?
+
+Answer:
+To prevent the old connection profile from automatically activating when we want the newly created lab profile to be used.
+
+
+18. FINAL NETWORK CONFIGURATION
+--------------------------------
+
+After successfully completing this practical, the expected configuration is:
+
+Connection Name:
+lab
+
+Network Interface:
+eth0
+
+Connection Type:
+Ethernet
+
+IPv4 Method:
+Manual
+
+Primary IP Address:
+172.25.250.11/24
+
+Secondary IP Address:
+10.0.1.1/24
+
+Gateway:
+172.25.250.254
+
+DNS Server:
+172.25.250.254
+
+Automatic Startup:
+Enabled for lab
+
+Old Connection:
+System eth0
+
+Old Connection Automatic Startup:
+Disabled
+
+Hostname Mapping:
+
+10.0.1.1 private
+
+Final Connectivity Test:
+
+ping -c3 serverb
+
+Expected Result:
+
+3 packets transmitted, 3 received, 0% packet loss.
+
+
+============================================================
+END OF PRACTICAL
+============================================================

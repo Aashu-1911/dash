@@ -1,0 +1,21 @@
+lab start rhcsa-rh124-review1                         # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                   # Logs into serverb as the student user via SSH.
+mkdir grading                                         # Creates the /home/student/grading directory.
+touch grading/grade{1,2,3}                            # Creates empty grade1, grade2, and grade3 files in grading using brace expansion.
+ls grading/                                           # Lists files in grading to verify grade1, grade2, and grade3 exist.
+head -5 bin/manage > grading/review.txt               # Writes the first 5 lines of bin/manage into grading/review.txt (overwriting).
+tail -3 bin/manage >> grading/review.txt              # Appends the last 3 lines of bin/manage to grading/review.txt.
+cd grading/                                           # Changes into the /home/student/grading directory.
+cp review.txt review-copy.txt                         # Copies review.txt to review-copy.txt inside grading.
+cd                                                    # Returns to the student user's home directory (/home/student).
+vim grading/review-copy.txt                          # Opens review-copy.txt in Vim (use yy + p on Test JJ, then :wq to save).
+vim grading/review-copy.txt                          # Opens review-copy.txt in Vim (use dd on Test HH, then :wq to save).
+vim grading/review-copy.txt                          # Opens review-copy.txt in Vim (add "Level 1 Training" between Test BB and Test CC, then :wq).
+ln grading/grade1 hardcopy                          # Creates a hard link at /home/student/hardcopy pointing to grading/grade1.
+ls -l grading/grade1                                  # Displays link count and details for grading/grade1 (link count becomes 2).
+ln -s grading/grade2 softcopy                         # Creates a symbolic link at /home/student/softcopy pointing to grading/grade2.
+ls -l softcopy                                        # Displays symbolic link details and target path for softcopy.
+ls -l /boot > grading/longlisting.txt                 # Saves non-hidden long listing of /boot to /home/student/grading/longlisting.txt.
+exit                                                  # Closes the SSH session and returns to workstation as student.
+lab grade rhcsa-rh124-review1                         # Grades the lab exercise on workstation and reports any failures.
+lab finish rhcsa-rh124-review1                        # Cleans up and completes the lab exercise on workstation.

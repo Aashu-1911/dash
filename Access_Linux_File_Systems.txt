@@ -1,0 +1,685 @@
+# LAB: ACCESS LINUX FILE SYSTEMS
+
+==================================================
+1. OBJECTIVE
+==================================================
+
+The objective of this practical is to learn how to:
+
+1. Mount a local file system.
+2. Identify a file system using its UUID.
+3. Generate a disk usage report.
+4. Locate files using the locate command.
+5. Search for files based on their size using the find command.
+6. Save search results into text files.
+
+==================================================
+2. UNDERSTANDING THE CONCEPTS
+==================================================
+
+A. WHAT IS A FILE SYSTEM?
+
+A file system is a method used by an operating system to organize and store files and directories on a storage device.
+
+Examples:
+- XFS
+- EXT4
+- FAT32
+- NTFS
+
+In this practical, the XFS file system is used.
+
+B. WHAT IS A PARTITION?
+
+A partition is a logical division of a physical storage device.
+
+Example:
+
+/dev/vdb       = Second disk
+/dev/vdb1      = First partition of the second disk
+
+Here:
+- /dev = Directory containing device files.
+- vdb = Disk device.
+- 1 = First partition.
+
+C. WHAT IS MOUNTING?
+
+Mounting means making a file system accessible through a directory in Linux.
+
+For example:
+
+mount /dev/vdb1 /mnt/freespace
+
+After mounting, you can access the files stored in /dev/vdb1 through:
+
+/mnt/freespace
+
+D. WHAT IS UUID?
+
+UUID stands for Universally Unique Identifier.
+
+Every file system can have a unique UUID.
+
+Example:
+
+44bfb7c8-970c-4d0b-b53d-90ae31cb27ca
+
+Why use UUID?
+
+Device names such as /dev/vdb1 can change depending on hardware detection order.
+
+UUID provides a more reliable way to identify a particular file system.
+
+E. WHAT IS DISK USAGE?
+
+Disk usage means the amount of storage space occupied by files and directories.
+
+Linux provides the du command to calculate disk usage.
+
+F. WHAT ARE LOCATE AND FIND?
+
+locate:
+- Searches for files using a previously created database.
+- Usually faster.
+- Database must be updated to include recently created files.
+
+find:
+- Searches the actual directory structure.
+- Can search using different conditions such as name, size, type and permissions.
+
+==================================================
+3. PRACTICAL EXECUTION
+==================================================
+
+STEP 1: PREPARE THE LAB ENVIRONMENT
+
+Command:
+
+lab start fs-review
+
+Explanation:
+
+This command prepares the virtual lab environment.
+
+It ensures that all required disks, partitions and resources are available.
+
+Run this command on the workstation as the student user.
+
+STEP 2: CONNECT TO SERVERB
+
+Command:
+
+ssh student@serverb
+
+Explanation:
+
+- ssh stands for Secure Shell.
+- It allows you to connect to another Linux machine securely.
+- student is the username.
+- serverb is the remote machine's hostname.
+
+After executing this command, you will enter the serverb system.
+
+STEP 3: SWITCH TO ROOT USER
+
+Command:
+
+sudo -i
+
+Explanation:
+
+- sudo allows a permitted user to execute commands with elevated privileges.
+- -i starts an interactive login shell as the root user.
+
+Root access is required because mounting file systems and creating mount directories generally require administrative privileges.
+
+STEP 4: IDENTIFY THE BLOCK DEVICE AND UUID
+
+Command:
+
+lsblk -fp /dev/vdb
+
+Explanation:
+
+lsblk = Lists block devices.
+-f = Displays file system information.
+-p = Displays complete device paths.
+
+This command displays:
+- Device name
+- File system type
+- File system version
+- Label
+- UUID
+- Available storage
+- Used storage percentage
+- Mount point
+
+Example output:
+
+NAME        FSTYPE  UUID
+/dev/vdb
+/dev/vdb1   xfs     44bfb7c8-970c-4d0b-b53d-90ae31cb27ca
+
+Important:
+
+In this example:
+- /dev/vdb is the disk.
+- /dev/vdb1 is its first partition.
+- xfs is the file system type.
+- UUID identifies the file system.
+
+NOTE:
+
+Your UUID may be different.
+
+Always copy the UUID displayed by your own system.
+
+STEP 5: CREATE THE MOUNT DIRECTORY
+
+Command:
+
+mkdir /mnt/freespace
+
+Explanation:
+
+mkdir means Make Directory.
+
+It creates a new directory.
+
+Here:
+
+/mnt/freespace
+
+This directory will act as the mount point for the file system.
+
+WHAT IS /mnt?
+
+/mnt is a standard Linux directory generally used for temporarily mounting file systems.
+
+STEP 6: MOUNT THE FILE SYSTEM USING UUID
+
+Command:
+
+mount UUID="YOUR-UUID" /mnt/freespace
+
+Example:
+
+mount UUID="44bfb7c8-970c-4d0b-b53d-90ae31cb27ca" /mnt/freespace
+
+Explanation:
+
+mount = Command used to attach a file system.
+
+UUID = Identifies the required file system.
+
+ /mnt/freespace = Directory where the file system will be accessible.
+
+Why use UUID instead of /dev/vdb1?
+
+Because device names can change, whereas UUID provides a stable identifier for the file system.
+
+IMPORTANT:
+
+Replace YOUR-UUID with the actual UUID obtained in Step 4.
+
+STEP 7: VERIFY THE MOUNT
+
+Command:
+
+lsblk -fp /dev/vdb1
+
+Explanation:
+
+This command displays the file system information of /dev/vdb1.
+
+Check the MOUNTPOINTS column.
+
+Expected result:
+
+/dev/vdb1  xfs  ...  /mnt/freespace
+
+If /mnt/freespace appears in the mount point column, the file system is successfully mounted.
+
+==================================================
+4. GENERATE A DISK USAGE REPORT
+==================================================
+
+STEP 8: CHECK DISK USAGE OF /usr/share
+
+Command:
+
+du /usr/share > /mnt/freespace/results.txt
+
+Explanation:
+
+du stands for Disk Usage.
+
+It calculates the disk usage of files and directories.
+
+Here:
+
+du /usr/share
+
+Calculates disk usage inside the /usr/share directory.
+
+The > operator is called output redirection.
+
+It redirects command output into a file instead of displaying it on the terminal.
+
+Therefore:
+
+/mnt/freespace/results.txt
+
+Stores the disk usage report.
+
+IMPORTANT:
+
+If results.txt already exists, > overwrites its previous contents.
+
+Additional useful commands:
+
+du -h /usr/share
+
+Displays disk usage in human-readable format (KB, MB, GB).
+
+du -sh /usr/share
+
+Displays the total disk usage of the directory in a summarized format.
+
+==================================================
+5. LOCATE FILES USING LOCATE COMMAND
+==================================================
+
+STEP 9: UPDATE THE LOCATE DATABASE
+
+Command:
+
+updatedb
+
+Explanation:
+
+locate does not normally search the entire file system directly.
+
+Instead, it searches a database containing file and directory paths.
+
+updatedb updates this database with the latest file system information.
+
+Why is this necessary?
+
+If a new file is created, the locate database might not immediately contain its path.
+
+Running updatedb refreshes the database.
+
+NOTE:
+
+updatedb generally requires root privileges.
+
+STEP 10: SEARCH FOR rsyslog.conf
+
+Command:
+
+locate rsyslog.conf > /mnt/freespace/search1.txt
+
+Explanation:
+
+locate rsyslog.conf
+
+Searches the locate database for paths containing the keyword:
+
+rsyslog.conf
+
+The > operator redirects the search results into:
+
+/mnt/freespace/search1.txt
+
+Example output stored in the file:
+
+/etc/rsyslog.conf
+/usr/share/doc/rsyslog/rsyslog.conf
+
+The actual results depend on your system.
+
+Additional useful locate commands:
+
+locate filename
+
+Search for a file by name.
+
+locate -i filename
+
+Search without considering uppercase and lowercase differences.
+
+locate -c filename
+
+Displays the number of matching results.
+
+==================================================
+6. SEARCH FILES BASED ON SIZE USING FIND
+==================================================
+
+STEP 11: FIND FILES BETWEEN 50 MB AND 100 MB
+
+Command:
+
+find /usr/share -size +50M -size -100M > /mnt/freespace/search2.txt
+
+Explanation:
+
+find = Command used to search files and directories.
+
+ /usr/share = Starting directory for the search.
+
+-size +50M = Matches files larger than 50 MB.
+
+-size -100M = Matches files smaller than 100 MB.
+
+> = Redirects output into a file.
+
+ /mnt/freespace/search2.txt = Destination file for search results.
+
+Therefore, this command searches inside /usr/share for files whose sizes are greater than 50 MB and less than 100 MB.
+
+The matching file paths are saved in:
+
+/mnt/freespace/search2.txt
+
+UNDERSTANDING FIND SIZE OPTIONS:
+
+-size +50M = Greater than 50 MB.
+
+-size -100M = Less than 100 MB.
+
+-size 50M = Size rounded up to 50 MB units according to find's size calculation.
+
+OTHER USEFUL FIND COMMANDS:
+
+1. Find files larger than 100 MB:
+
+find /usr/share -type f -size +100M
+
+2. Find files smaller than 10 MB:
+
+find /usr/share -type f -size -10M
+
+3. Find files with a specific name:
+
+find /usr/share -name "rsyslog.conf"
+
+4. Find only files:
+
+find /usr/share -type f
+
+5. Find only directories:
+
+find /usr/share -type d
+
+6. Find files larger than 50 MB:
+
+find /usr/share -type f -size +50M
+
+==================================================
+7. RETURN TO WORKSTATION
+==================================================
+
+STEP 12: EXIT FROM ROOT USER
+
+Command:
+
+exit
+
+Explanation:
+
+This exits the root shell and returns to the student user on serverb.
+
+STEP 13: DISCONNECT FROM SERVERB
+
+Command:
+
+exit
+
+Explanation:
+
+This closes the SSH connection and returns you to the workstation machine.
+
+You should now see:
+
+[student@workstation ~]$
+
+==================================================
+8. EVALUATE THE PRACTICAL
+==================================================
+
+Command:
+
+lab grade fs-review
+
+Explanation:
+
+This command checks whether you have successfully completed the practical requirements.
+
+It verifies your configuration and completed tasks.
+
+If any errors are reported:
+1. Read the error message.
+2. Correct the configuration.
+3. Run the grading command again.
+
+Continue until the lab reports successful completion.
+
+==================================================
+9. FINISH THE LAB
+==================================================
+
+Command:
+
+lab finish fs-review
+
+Explanation:
+
+This command completes the practical environment.
+
+It helps ensure that resources from the current exercise do not interfere with upcoming exercises.
+
+Run it on the workstation as the student user.
+
+==================================================
+10. IMPORTANT LINUX COMMANDS REVISION
+==================================================
+
+1. lab start fs-review
+   Prepares the practical environment.
+
+2. ssh student@serverb
+   Connects to the remote server.
+
+3. sudo -i
+   Switches to the root user.
+
+4. lsblk -fp /dev/vdb
+   Displays block device and file system information.
+
+5. mkdir /mnt/freespace
+   Creates a directory.
+
+6. mount UUID="UUID" /mnt/freespace
+   Mounts the file system using its UUID.
+
+7. lsblk -fp /dev/vdb1
+   Verifies the mount point.
+
+8. du /usr/share
+   Calculates disk usage.
+
+9. du /usr/share > /mnt/freespace/results.txt
+   Saves the disk usage report.
+
+10. updatedb
+    Updates the locate database.
+
+11. locate rsyslog.conf
+    Searches for matching file paths.
+
+12. locate rsyslog.conf > /mnt/freespace/search1.txt
+    Saves locate search results.
+
+13. find /usr/share -size +50M -size -100M
+    Searches for files between 50 MB and 100 MB.
+
+14. exit
+    Exits the current shell or SSH session.
+
+15. lab grade fs-review
+    Checks practical completion.
+
+16. lab finish fs-review
+    Completes the lab environment.
+
+==================================================
+11. IMPORTANT INTERVIEW / VIVA QUESTIONS
+==================================================
+
+Q1. What is mounting in Linux?
+
+Ans: Mounting is the process of making a file system accessible through a directory.
+
+Q2. What is a mount point?
+
+Ans: A mount point is a directory where a file system is attached and accessed.
+
+Q3. What is UUID?
+
+Ans: UUID stands for Universally Unique Identifier. It uniquely identifies a file system.
+
+Q4. Why do we use UUID instead of device names?
+
+Ans: Device names may change depending on hardware detection order. UUID provides a more stable identification method.
+
+Q5. What is the purpose of the mount command?
+
+Ans: It attaches a file system to a specified directory.
+
+Q6. What is the purpose of lsblk?
+
+Ans: It displays block devices such as hard disks and partitions.
+
+Q7. What is the difference between du and df?
+
+Ans:
+- du displays disk usage of files and directories.
+- df displays available and used space of mounted file systems.
+
+Q8. What is the purpose of the locate command?
+
+Ans: It searches for file paths using a previously created database.
+
+Q9. Why do we use updatedb?
+
+Ans: It refreshes the database used by the locate command.
+
+Q10. What is the difference between locate and find?
+
+Ans:
+- locate searches a database and is generally faster.
+- find searches directories directly and supports conditions such as file size, name and type.
+
+Q11. What is the purpose of the find command?
+
+Ans: It searches for files and directories based on specified conditions.
+
+Q12. What does -size +50M mean?
+
+Ans: It matches files larger than 50 MB.
+
+Q13. What does the > operator do in Linux?
+
+Ans: It redirects command output into a file and overwrites the file if it already exists.
+
+Q14. What is the purpose of /mnt?
+
+Ans: It is a standard directory used as a mount point for temporarily mounted file systems.
+
+Q15. What is XFS?
+
+Ans: XFS is a high-performance journaling file system supported by Linux.
+
+==================================================
+12. COMPLETE PRACTICAL COMMAND SEQUENCE
+==================================================
+
+Run these commands in the given order.
+
+ON WORKSTATION:
+
+lab start fs-review
+
+ssh student@serverb
+
+sudo -i
+
+ON SERVERB AS ROOT:
+
+lsblk -fp /dev/vdb
+
+mkdir /mnt/freespace
+
+mount UUID="YOUR-UUID" /mnt/freespace
+
+lsblk -fp /dev/vdb1
+
+du /usr/share > /mnt/freespace/results.txt
+
+updatedb
+
+locate rsyslog.conf > /mnt/freespace/search1.txt
+
+find /usr/share -size +50M -size -100M > /mnt/freespace/search2.txt
+
+exit
+
+ON SERVERB AS STUDENT:
+
+exit
+
+BACK ON WORKSTATION:
+
+lab grade fs-review
+
+lab finish fs-review
+
+==================================================
+13. FINAL UNDERSTANDING
+==================================================
+
+In this practical, you learned how to work with Linux file systems and search for files.
+
+The practical follows this sequence:
+
+1. Prepare the lab environment.
+2. Connect to the remote Linux server.
+3. Switch to root.
+4. Identify the disk partition and its UUID.
+5. Create a mount point.
+6. Mount the file system using UUID.
+7. Verify the mounted file system.
+8. Generate a disk usage report using du.
+9. Update the locate database using updatedb.
+10. Search for files using locate.
+11. Search for files according to their size using find.
+12. Save all reports inside the mounted file system.
+13. Grade and finish the practical.
+
+MAIN COMMANDS TO REMEMBER:
+
+lsblk = List block devices.
+mount = Mount a file system.
+mkdir = Create a directory.
+du = Check directory disk usage.
+updatedb = Update locate database.
+locate = Search using a database.
+find = Search files using conditions.
+df = Check file system disk space.
+exit = Exit current shell.
+
+END OF PRACTICAL

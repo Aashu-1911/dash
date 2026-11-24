@@ -1,0 +1,27 @@
+lab start rhcsa-rh124-review2               # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                         # Logs into serverb as the student user via SSH.
+top                                         # Opens interactive process monitor (press k, enter PID, press Enter for SIGTERM, press q to quit).
+sudo -i                                     # Switches to an interactive root login shell (password: student).
+groupadd -g 50000 database                  # Creates the database group with GID 50000.
+useradd -G database dbadmin1                # Creates dbadmin1 with database as a supplementary group.
+passwd dbadmin1                             # Sets dbadmin1's password (enter redhat when prompted).
+chage -d 0 dbadmin1                         # Forces dbadmin1 to change password on first login.
+chage -m 10 dbadmin1                        # Sets minimum password age for dbadmin1 to 10 days.
+chage -M 30 dbadmin1                        # Sets maximum password age for dbadmin1 to 30 days.
+vim /etc/sudoers.d/dbadmin1                 # Creates sudoers rule; add "dbadmin1 ALL=(ALL) ALL" and save.
+su - dbadmin1                               # Switches to a login shell for dbadmin1.
+echo "umask 007" >> .bashrc                 # Appends default umask 007 to dbadmin1's .bashrc file.
+source ~/.bashrc                            # Reloads ~/.bashrc to apply the updated umask in the current shell.
+mkdir review2                               # Creates the review2 directory inside /home/dbadmin1.
+ls -ld review2                              # Displays permissions and ownership of review2.
+chown :database review2                     # Sets group ownership of review2 to the database group.
+chmod g=rwx review2                         # Grants full read, write, and execute permissions to the database group.
+chmod o+t review2                          # Sets the sticky bit so users can only delete files they own.
+chmod g+s review2                          # Sets setgid so new files/subdirectories inherit the database group.
+chmod o+rx review2                         # Allows other users to read and enter review2 without modifying contents.
+ls -ld review2                              # Verifies setgid, sticky bit, and rwx/r-x permissions on review2.
+chmod o+x /home/dbadmin1                    # Grants execute/traverse permission to others on /home/dbadmin1 without listing contents.
+ls -ld /home/dbadmin1                       # Verifies permissions on /home/dbadmin1.
+exit                                        # Exits dbadmin1, root, and SSH sessions to return to workstation (run as needed).
+lab grade rhcsa-rh124-review2               # Grades the lab exercise on workstation and reports any failures.
+lab finish rhcsa-rh124-review2              # Cleans up and completes the lab exercise on workstation.

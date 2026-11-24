@@ -1,0 +1,876 @@
+Linux Command Line Labs — Assignment 1 and Assignment 2
+
+These notes explain both practical assignments in sequence. The examples use the training environment's student account. Type only the commands shown in code blocks; the terminal prompt (for example, [student@workstation ~]$) is not part of the command.
+
+---
+
+Assignment 1: Lab — Access the Command Line
+
+1. What this lab teaches
+
+This lab introduces the Bash command line. You practise running commands, checking file information, displaying sections of a text file, and using Bash history and editing shortcuts.
+
+Important terms
+
+- Command line: A text-based way to interact with the operating system by entering commands.
+- Shell: A program that reads commands and starts the requested programs.
+- Bash: Bourne Again Shell, a commonly used Linux shell.
+- Terminal: The application or window in which you interact with a shell.
+- Command: An instruction entered at the shell prompt.
+
+Understand the prompt
+
+Example:
+
+[student@workstation ~]$
+
+- student is the current username.
+- workstation is the computer's hostname.
+- ~ represents the current user's home directory. For the student account, this is usually /home/student.
+- $ indicates a normal, non-root shell prompt.
+
+Do not type the prompt itself. Type the command after $.
+
+2. Prepare the lab
+
+Run this command as the student user on workstation:
+
+lab start cli-review
+
+- lab is a command supplied by the training environment; it is not a standard Bash command.
+- start asks the lab system to prepare the exercise.
+- cli-review is the exercise name.
+
+The command prepares the environment and required resources.
+
+3. Display the current date and time
+
+Command:
+
+date
+
+The date command displays the system's current date and time. Example output from the assignment:
+
+Mon Feb 28 01:57:25 PM PDT 2022
+
+The output contains the weekday, month, day of the month, time, AM/PM indicator, time-zone abbreviation, and year. Your output will depend on the system clock and time zone; the assignment's output is only an example.
+
+4. Display the time in 24-hour format
+
+Command:
+
+date +%R
+
+- date runs the date program.
+- + introduces a custom output format.
+- %R displays the time in 24-hour HH:MM format.
+
+Example output:
+
+13:58
+
+Useful date format specifiers:
+
+ |  Format  |  Meaning  |  Example  | 
+
+ |  %H  |  Hour in 24-hour format  |  13  | 
+ |  %M  |  Minutes  |  58  | 
+ |  %S  |  Seconds  |  25  | 
+ |  %R  |  24-hour time, hours and minutes  |  13:58  | 
+ |  %T  |  24-hour time, hours, minutes and seconds  |  13:58:25  | 
+ |  %F  |  Date in YYYY-MM-DD format  |  2026-11-23  | 
+ |  %s  |  Seconds since the Unix Epoch  |  A large integer  | 
+
+5. Identify the type of a file
+
+The assignment asks what kind of file /home/student/zcat is and whether a person can read it.
+
+Command (from the student's home directory):
+
+file zcat
+
+Example output:
+
+zcat: a /usr/bin/sh script, ASCII text executable
+
+Meaning:
+
+- file examines a file and reports what type it appears to be.
+- zcat is the filename being examined.
+- /usr/bin/sh identifies the shell interpreter associated with the script.
+- script means the file contains instructions for an interpreter to run.
+- ASCII text means the contents are text encoded using ASCII characters.
+- executable means the file has permission to be run as a program.
+
+Is it human-readable? Yes. The result identifies it as ASCII text, so its contents can be read with text-display commands such as head and tail. A text file can also have executable permission.
+
+6. Count lines, words, and bytes with wc
+
+Command:
+
+wc zcat
+
+Example output:
+
+51  299  1988 zcat
+
+By default, wc (word count) reports:
+
+1. Number of lines.
+2. Number of words.
+3. Number of bytes.
+4. Filename.
+
+In the example, zcat has 51 lines, 299 words, and 1,988 bytes.
+
+Useful options:
+
+wc -l zcat    # Count lines only
+wc -w zcat    # Count words only
+wc -c zcat    # Count bytes only
+
+A byte is a unit of digital information, usually consisting of 8 bits.
+
+Bash shortcut: Esc followed by period
+
+The Esc then . shortcut inserts the last argument from the previous command. Press Esc, release it, and then press the period key; in typical Bash Readline behaviour, these are sequential key presses, not simultaneous.
+
+For example, after:
+
+file zcat
+
+Type wc  and then press Esc followed by .. Bash inserts zcat, producing:
+
+wc zcat
+
+The shortcut saves you from typing the same filename again.
+
+7. Display the first 10 lines with head
+
+Command:
+
+head zcat
+
+head displays the beginning of a file. By default, it displays the first 10 lines.
+
+To display a different number of lines, use -n:
+
+head -n 5 zcat
+
+This displays the first five lines.
+
+The first line of the example zcat file is:
+
+!/bin/sh
+
+This is called a shebang. It identifies the interpreter used to run the script. Here, the interpreter is /bin/sh.
+
+Lines beginning with # in a shell script are usually comments. Comments explain the script and are not executed as ordinary commands. The shebang is a special first-line use of #.
+
+The lab demonstrates using Esc followed by . again to reuse zcat as the last argument:
+
+head zcat
+
+8. Display the last 10 lines with tail
+
+Command:
+
+tail zcat
+
+tail displays the end of a file. By default, it displays the last 10 lines.
+
+To display a different number of lines, use -n:
+
+tail -n 20 zcat
+
+This displays the last 20 lines.
+
+Remember:
+
+- head displays the beginning of a file.
+- tail displays the end of a file.
+
+The tail output may contain a message saying that, when no file is specified (or when the filename is -), input is read from standard input.
+
+Standard input, output, and error
+
+Linux programs commonly use three standard data streams:
+
+- stdin (standard input): Data received by a program, normally from the keyboard when running interactively.
+- stdout (standard output): Normal output produced by a program.
+- stderr (standard error): Error or diagnostic messages produced by a program.
+
+9. Repeat the previous command
+
+The lab asks you to run the previous command again using four or fewer keystrokes.
+
+Two methods are shown:
+
+Method 1: UpArrow and Enter
+
+1. Press UpArrow to recall the previous command.
+2. Press Enter to run it.
+
+Method 2: !! and Enter
+
+!!
+
+!! is a Bash history expansion shortcut that repeats the most recently executed command. For example, if the previous command was tail zcat, !! runs tail zcat again.
+
+10. Edit a command to display the last 20 lines
+
+Start by pressing UpArrow to recall:
+
+tail zcat
+
+Then:
+
+1. Press Ctrl+A to move the cursor to the beginning of the command line.
+2. Press Ctrl+RightArrow to move to the next word boundary, which places the cursor after tail and before zcat in the lab's example.
+3. Insert -n 20  at that position.
+4. Press Enter.
+
+The final command is:
+
+tail -n 20 zcat
+
+Useful command-line editing shortcuts:
+
+ |  Shortcut  |  Action  | 
+
+ |  Ctrl+A  |  Move to the beginning of the line  | 
+ |  Ctrl+E  |  Move to the end of the line  | 
+ |  Ctrl+RightArrow  |  Move to the next word boundary  | 
+ |  Ctrl+LeftArrow  |  Move to the previous word boundary  | 
+ |  UpArrow  |  Recall the previous command  | 
+ |  DownArrow  |  Move forward through recalled history entries  | 
+
+The exact behaviour of some key combinations can depend on the terminal application and its keyboard settings.
+
+11. Use command history to run an earlier command
+
+Command:
+
+history
+
+Bash keeps a history list of commands entered in the shell. The history command displays that list with numbers.
+
+Example:
+
+1  date
+2  date +%R
+3  file zcat
+4  wc zcat
+5  head zcat
+6  tail zcat
+
+To run a command by its history number, type an exclamation mark followed by the number:
+
+!2
+
+Bash expands !2 to the command stored as history entry 2, which in this example is:
+
+date +%R
+
+Important: The history numbers on your computer may differ from the example. Run history, locate the entry for date +%R, and use its actual number. Do not assume it is always 2.
+
+12. Grade the assignment
+
+Return to the student user's workstation shell and run:
+
+lab grade cli-review
+
+The lab system checks the work. If it reports a failure, read the message, correct the relevant task, and run the grading command again.
+
+13. Finish the assignment
+
+On workstation, run:
+
+lab finish cli-review
+
+This marks the exercise as finished and cleans up its lab resources so they do not interfere with later exercises.
+
+Assignment 1 — Quick revision table
+
+ |  Command or shortcut  |  Purpose  | 
+
+ |  date  |  Display current date and time  | 
+ |  date +%R  |  Display 24-hour time as hours and minutes  | 
+ |  file zcat  |  Identify the file type  | 
+ |  wc zcat  |  Count lines, words, and bytes  | 
+ |  wc -l zcat  |  Count lines only  | 
+ |  head zcat  |  Display first 10 lines  | 
+ |  tail zcat  |  Display last 10 lines  | 
+ |  tail -n 20 zcat  |  Display last 20 lines  | 
+ |  history  |  Display command history  | 
+ |  !!  |  Repeat the previous command  | 
+ |  !number  |  Run a command by its history number  | 
+ |  Esc then .  |  Insert the previous command's last argument  | 
+ |  Ctrl+A  |  Move cursor to start of line  | 
+ |  Ctrl+RightArrow  |  Move to next word boundary  | 
+ |  lab start cli-review  |  Prepare the lab  | 
+ |  lab grade cli-review  |  Grade the lab  | 
+ |  lab finish cli-review  |  Finish the lab  | 
+
+---
+
+Assignment 2: Lab — Manage Files from the Command Line
+
+1. What this lab teaches
+
+This lab teaches you to create directories and empty files, navigate between directories, move and copy files, match filenames with wildcards, use Bash brace expansion and command substitution, delete files and directories, and create a hard link.
+
+Important terms
+
+- File: A named collection of data stored on a filesystem.
+- Directory: A container used to organize files and other directories; commonly called a folder.
+- Path: The location of a file or directory.
+- Current working directory: The directory in which the shell is currently operating.
+- Parent directory: The directory one level above another directory.
+- Subdirectory: A directory inside another directory.
+- Wildcard/glob: A filename pattern such as * or [56] used by the shell to match names.
+- Brace expansion: A Bash feature that generates multiple strings from one expression, such as {1..4} or {a,b}.
+
+2. Understand the two machines
+
+This assignment begins on workstation, then connects to another machine named serverb using SSH. Most file and directory operations happen on serverb. You return to workstation to grade and finish the lab.
+
+Example workstation prompt:
+
+[student@workstation ~]$
+
+Example serverb prompt after connecting:
+
+[student@serverb ~]$
+
+- student is the username.
+- workstation or serverb is the hostname.
+- ~ represents the student's home directory, usually /home/student.
+- $ indicates a normal user shell.
+
+3. Prepare the lab and connect to serverb
+
+On workstation, run:
+
+lab start files-review
+
+The lab start command prepares the exercise resources. files-review is the lab name.
+
+Then connect to serverb:
+
+ssh student@serverb
+
+- ssh means Secure Shell. It creates an encrypted remote terminal connection.
+- student is the account name on the remote machine.
+- @ separates the username from the hostname.
+- serverb is the remote machine's hostname.
+
+The assignment says SSH-key authentication is already configured. SSH keys use a key pair: a private key kept by the client and a matching public key installed for the account on the server. You do not need to configure the keys in this lab.
+
+After login, check the prompt. It should identify serverb, not workstation.
+
+4. Create Documents/project_plans and two empty files
+
+Create the directory path:
+
+mkdir -p ~/Documents/project_plans
+
+- mkdir means make directory.
+- -p creates missing parent directories and does not fail merely because a requested directory already exists.
+- ~ means the current user's home directory. For student, it is /home/student.
+- Documents/project_plans is the directory path to create.
+
+The command ensures that both Documents and project_plans exist.
+
+Now create two empty files:
+
+touch ~/Documents/project_plans/season{1,2}_project_plan.odf
+
+- touch creates an empty file if it does not exist. If it already exists, touch updates its timestamps rather than clearing its contents.
+- {1,2} is brace expansion with two alternatives. It generates season1 and season2.
+
+The command creates:
+
+season1_project_plan.odf
+season2_project_plan.odf
+
+The .odf extension is the requested filename extension. Because these are empty placeholders, they are not complete, populated documents.
+
+Verify the structure:
+
+ls -lR Documents/
+
+- ls lists directory entries.
+- -l displays a detailed listing.
+- -R lists directories recursively, including their subdirectories.
+
+In a long listing, the fields commonly include file type and permissions, hard-link count, owner, group, size in bytes, modification time, and filename. A size of 0 means the file is empty. A leading d in the permissions column indicates a directory; a leading - indicates a regular file.
+
+5. Create 12 TV episode files using brace expansion
+
+Command:
+
+touch tv_season{1..2}_episode{1..6}.ogg
+
+Bash brace expansion generates every combination of the two season numbers and six episode numbers:
+
+- {1..2} generates 1 and 2.
+- {1..6} generates 1, 2, 3, 4, 5, and 6.
+
+The result is 2 seasons multiplied by 6 episodes, which creates 12 filenames:
+
+tv_season1_episode1.ogg
+tv_season1_episode2.ogg
+tv_season1_episode3.ogg
+tv_season1_episode4.ogg
+tv_season1_episode5.ogg
+tv_season1_episode6.ogg
+
+tv_season2_episode1.ogg
+tv_season2_episode2.ogg
+tv_season2_episode3.ogg
+tv_season2_episode4.ogg
+tv_season2_episode5.ogg
+tv_season2_episode6.ogg
+
+The .ogg extension is commonly associated with an Ogg multimedia container. In this lab the files are empty practice files, not real audio episodes.
+
+Check them with:
+
+ls tv*
+
+* is a wildcard (filename glob) that matches zero or more characters. tv* matches names beginning with tv followed by any characters.
+
+6. Create eight mystery chapter files
+
+Command:
+
+touch mystery_chapter{1..8}.odf
+
+{1..8} is a numeric brace-expansion range. It generates the numbers 1 through 8, so touch creates eight empty files:
+
+mystery_chapter1.odf
+mystery_chapter2.odf
+mystery_chapter3.odf
+mystery_chapter4.odf
+mystery_chapter5.odf
+mystery_chapter6.odf
+mystery_chapter7.odf
+mystery_chapter8.odf
+
+Verify using:
+
+ls mys*
+
+mys* matches filenames beginning with mys.
+
+7. Create Videos/season1 and Videos/season2, then move the episodes
+
+Create both season directories with one command:
+
+mkdir -p Videos/season{1..2}
+
+Brace expansion creates the two paths Videos/season1 and Videos/season2. The -p option also creates Videos if it does not already exist.
+
+Move season 1 episodes:
+
+mv tv_season1* Videos/season1
+
+Move season 2 episodes:
+
+mv tv_season2* Videos/season2
+
+mv means move. It can move files to another directory or rename a file. The patterns tv_season1* and tv_season2* use * to match every filename beginning with the relevant prefix. The destination paths are relative paths because they are written from the current working directory without starting with / or ~.
+
+Verify the result:
+
+ls -R Videos
+
+The six season 1 files should be under Videos/season1, and the six season 2 files should be under Videos/season2.
+
+8. Create the my_bestseller directory hierarchy
+
+Create my_bestseller and its chapters subdirectory:
+
+mkdir -p Documents/my_bestseller/chapters
+
+This creates the parent path if necessary.
+
+Create three additional directories inside my_bestseller with one command:
+
+mkdir Documents/my_bestseller/{editor,changes,vacation}
+
+Brace expansion produces these three directory paths:
+
+Documents/my_bestseller/editor
+Documents/my_bestseller/changes
+Documents/my_bestseller/vacation
+
+The parent Documents/my_bestseller already exists, so the assignment does not require -p for this second command.
+
+The hierarchy should be:
+
+Documents/
+    my_bestseller/
+        chapters/
+        editor/
+        changes/
+        vacation/
+    project_plans/
+
+Verify with:
+
+ls -R Documents
+
+A directory hierarchy is a tree-like arrangement of parent directories and their subdirectories.
+
+9. Move all mystery chapters into chapters, then split them between editor and vacation
+
+A. Change to the chapters directory
+
+cd Documents/my_bestseller/chapters
+
+cd means change directory. It changes the current working directory.
+
+To check your current full path, use:
+
+pwd
+
+pwd means print working directory.
+
+B. Move all mystery chapter files from the home directory into the current directory
+
+mv ~/mystery_chapter* .
+
+Understand the symbols:
+
+- ~ means the student's home directory, /home/student.
+- mystery_chapter* matches all filenames in the home directory that begin with mystery_chapter.
+- . means the current working directory.
+
+The command moves all eight mystery chapter files from /home/student into the current chapters directory.
+
+C. Move chapters 1 and 2 to editor
+
+mv mystery_chapter{1..2}.odf ../editor
+
+- {1..2} expands to chapter numbers 1 and 2.
+- .. means the parent directory of the current directory.
+- ../editor means go up one directory level, then select its editor subdirectory.
+
+The command moves chapters 1 and 2 from chapters into editor.
+
+D. Move chapters 7 and 8 to vacation
+
+mv mystery_chapter{7,8}.odf ../vacation
+
+{7,8} is brace expansion with a list of two alternatives. It generates only chapter numbers 7 and 8. ../vacation identifies the sibling vacation directory through the parent directory.
+
+After these moves, chapters should contain chapters 3, 4, 5, and 6; editor should contain chapters 1 and 2; and vacation should contain chapters 7 and 8.
+
+Range expansion versus list expansion
+
+- {1..8} generates a sequence of numbers from 1 through 8.
+- {7,8} generates only the two listed alternatives.
+- {editor,changes,vacation} generates three text alternatives.
+
+Brace expansion generates strings before the command runs. It is different from wildcard matching, which matches existing filenames.
+
+10. Copy season 2 episodes into vacation and use cd -
+
+A. Go to Videos/season2 and copy episode 1
+
+cd ~/Videos/season2
+cp *episode1.ogg ~/Documents/my_bestseller/vacation
+
+- cd changes the current directory.
+- cp means copy. It creates a copy at the destination and leaves the original in place.
+- *episode1.ogg matches a filename with any characters before episode1.ogg. In this directory, it matches tv_season2_episode1.ogg.
+- The destination is the vacation directory.
+
+B. Visit vacation, list the files, and return to season2
+
+cd ~/Documents/my_bestseller/vacation
+ls
+cd -
+
+cd - switches to the previous working directory. In this sequence, it returns from vacation to Videos/season2. It also prints the path it switched to.
+
+C. Copy episode 2 and return to vacation
+
+While back in Videos/season2, run:
+
+cp *episode2.ogg ~/Documents/my_bestseller/vacation
+cd -
+ls
+
+The cp command copies episode 2 into vacation. The next cd - switches back to the previous directory, which is now vacation.
+
+At this point, vacation should contain chapters 7 and 8 and season 2 episodes 1 and 2.
+
+Important: cd - switches between the current and previous working directories. It is not the same as cd .., which always moves one level up.
+
+11. Copy chapters 5 and 6 using square-bracket pattern matching
+
+Move to the my_bestseller directory:
+
+cd ~/Documents/my_bestseller
+
+Copy chapters 5 and 6 from chapters to changes:
+
+cp chapters/mystery_chapter[56].odf changes
+
+[56] is a bracket expression in a filename glob. It matches exactly one character that is either 5 or 6 at that position. Thus, it matches:
+
+mystery_chapter5.odf
+mystery_chapter6.odf
+
+It does not match chapter 4 or chapter 7.
+
+Other common filename patterns:
+
+ |  Pattern  |  Meaning  | 
+
+ |  *  |  Zero or more characters  | 
+ |  ?  |  Exactly one character  | 
+ |  [56]  |  One character, either 5 or 6  | 
+ |  [1-5]  |  One character in the range 1 through 5  | 
+ |  [a-z]  |  One lowercase letter in the range a through z  | 
+
+Do not confuse brace expansion and bracket matching: {5,6} generates two strings. [56] is a pattern that matches one character in existing filenames.
+
+Because this is cp, the original chapter files remain in chapters, and copies are created in changes.
+
+12. Use command substitution to put the date and timestamp in filenames
+
+Change to the changes directory:
+
+cd changes
+
+Create a date-named copy:
+
+cp mystery_chapter5.odf mystery_chapter5_$(date +%F).odf
+
+Create a timestamp-named copy:
+
+cp mystery_chapter5.odf mystery_chapter5_$(date +%s).odf
+
+What is command substitution?
+
+Command substitution runs a command and inserts that command's output into another command. Its syntax is:
+
+$(command)
+
+For the first copy:
+
+- date +%F prints the date in YYYY-MM-DD format.
+- $(date +%F) is replaced by that date.
+- The resulting filename looks like mystery_chapter5_2026-11-23.odf (the actual date depends on the system clock).
+
+For the second copy:
+
+- date +%s prints the number of seconds since the Unix Epoch.
+- The Unix Epoch begins at 1970-01-01 00:00:00 UTC.
+- $(date +%s) is replaced by that integer.
+- The resulting filename looks like mystery_chapter5_1795411200.odf (the actual value depends on when the command runs).
+
+A timestamp can help create a distinct filename for a copy made at a different second. If two copies are made during the same second, the generated names can be identical.
+
+What does the backslash mean in the assignment's example?
+
+The assignment sometimes writes a command across two lines:
+
+cp mystery_chapter5.odf \
+mystery_chapter5_$(date +%F).odf
+
+A backslash immediately before a newline is a line-continuation character. It tells Bash that the command continues on the next line. It is equivalent to writing the command on one line:
+
+cp mystery_chapter5.odf mystery_chapter5_$(date +%F).odf
+
+13. Delete the changes and vacation directories
+
+A. Delete all files inside changes
+
+You should be inside changes. Run:
+
+rm mystery*
+
+- rm means remove; it deletes files.
+- mystery* matches all filenames beginning with mystery.
+
+This removes the original chapter 5 and 6 copies in changes and the two extra date/timestamp copies created in the previous step.
+
+Caution: rm generally does not move files to a recycle bin. Check the pattern and current directory before using it.
+
+B. Move to the parent directory
+
+cd ..
+
+.. identifies the parent directory. You move from changes to my_bestseller.
+
+C. Try rm changes
+
+rm changes
+
+The assignment expects this command to fail with a message such as:
+
+rm: cannot remove 'changes': Is a directory
+
+Without the recursive option, rm does not remove a directory.
+
+D. Remove the now-empty changes directory
+
+rmdir changes
+
+rmdir removes an empty directory. It fails if the directory still contains files or subdirectories.
+
+E. Remove vacation recursively
+
+rm -r vacation
+
+- -r means recursive.
+- rm -r removes the directory and its contents, including files and subdirectories.
+
+Use this command carefully because it deletes the target directory and everything inside it.
+
+F. Return to the home directory
+
+cd
+
+With no directory argument, cd returns to the current user's home directory, /home/student for this lab.
+
+14. Create a hard link to the season 2 project plan
+
+The source file is:
+
+~/Documents/project_plans/season2_project_plan.odf
+
+The required hard-link name is:
+
+~/Documents/backups/season2_project_plan.odf.back
+
+Create the backups directory:
+
+mkdir ~/Documents/backups
+
+Create the hard link:
+
+ln ~/Documents/project_plans/season2_project_plan.odf \
+~/Documents/backups/season2_project_plan.odf.back
+
+What is a hard link?
+
+A hard link is another directory entry (another filename) that refers to the same underlying file and inode. It is not an independent copy of the file's data.
+
+- ln creates a hard link by default.
+- The first path is the existing file.
+- The second path is the new hard-link filename.
+- Do not use -s for this task; ln -s creates a symbolic (soft) link instead.
+
+What is an inode?
+
+An inode is a filesystem data structure that stores file metadata and information needed to locate the file's data. A directory entry connects a filename to an inode.
+
+Both the original filename and the hard-link filename point to the same inode. Therefore, changes made through one name are visible through the other name.
+
+If one filename is deleted, the other hard link can still access the file. However, a hard link is not a separate backup copy: it does not protect against accidental edits, data corruption, or loss of the filesystem. Use a separate copy (for example, cp) for an independent backup.
+
+Verify the hard link
+
+Run:
+
+ls -lR ~/Documents/
+
+In the assignment's output, both the original and hard-link filenames show a link count of 2. The link count is the number of hard links (directory entries) referring to that inode. A count of 2 confirms that the file has two hard-link names.
+
+Hard links normally must be on the same filesystem. The lab's source and destination are under the same home directory, so the operation is expected to work.
+
+15. Return to workstation
+
+After completing the serverb tasks, run:
+
+exit
+
+exit closes the current shell session. Because you are connected through SSH, this logs you out of serverb and returns you to the original workstation shell.
+
+Check that the prompt now identifies workstation:
+
+[student@workstation ~]$
+
+16. Grade the assignment
+
+On workstation, run:
+
+lab grade files-review
+
+If the grading system reports failures, read the messages, correct the relevant items on serverb, exit back to workstation, and grade again.
+
+17. Finish the assignment
+
+On workstation, run:
+
+lab finish files-review
+
+This marks the lab as complete and cleans up its resources for later exercises.
+
+Assignment 2 — Quick revision table
+
+ |  Command or syntax  |  Purpose  | 
+
+ |  ssh student@serverb  |  Connect to the remote server  | 
+ |  pwd  |  Print the current working directory  | 
+ |  mkdir folder  |  Create a directory  | 
+ |  mkdir -p a/b  |  Create parent and child directories as needed  | 
+ |  touch file  |  Create an empty file or update timestamps  | 
+ |  ls -lR folder  |  Recursively list detailed directory contents  | 
+ |  mv source destination  |  Move or rename files/directories  | 
+ |  cp source destination  |  Copy files, keeping the original  | 
+ |  cd path  |  Change current directory  | 
+ |  cd ..  |  Move to the parent directory  | 
+ |  cd -  |  Return to the previous working directory  | 
+ |  cd or cd ~  |  Return to the home directory  | 
+ |  rm file  |  Delete a file  | 
+ |  rmdir folder  |  Delete an empty directory  | 
+ |  rm -r folder  |  Delete a directory and its contents recursively  | 
+ |  ln source hardlink  |  Create a hard link  | 
+ |  ln -s source symlink  |  Create a symbolic link  | 
+ |  *  |  Match zero or more characters in a filename pattern  | 
+ |  ?  |  Match exactly one character  | 
+ |  [56]  |  Match either 5 or 6 at one character position  | 
+ |  {1..8}  |  Generate a numeric sequence  | 
+ |  {a,b,c}  |  Generate listed alternatives  | 
+ |  $(command)  |  Run a command and insert its output  | 
+ |  date +%F  |  Print date as YYYY-MM-DD  | 
+ |  date +%s  |  Print seconds since the Unix Epoch  | 
+ |  exit  |  Close the current shell session  | 
+ |  lab start files-review  |  Prepare the lab  | 
+ |  lab grade files-review  |  Grade the lab  | 
+ |  lab finish files-review  |  Finish the lab  | 
+
+---
+
+Final comparison: Assignment 1 and Assignment 2
+
+ |  Topic  |  Assignment 1: Access the Command Line  |  Assignment 2: Manage Files  | 
+
+ |  Main focus  |  Running commands and using Bash history  |  Managing files and directories  | 
+ |  Date commands  |  date, date +%R  |  date +%F, date +%s  | 
+ |  File inspection  |  file, wc, head, tail  |  ls, ls -lR  | 
+ |  Navigation  |  Home directory and shell prompt basics  |  cd, cd .., cd -, pwd, ~, ., ..  | 
+ |  File creation  |  Not a main focus  |  touch  | 
+ |  Directory creation  |  Not a main focus  |  mkdir, mkdir -p  | 
+ |  Move and copy  |  Not a main focus  |  mv, cp  | 
+ |  Filename matching  |  Not a main focus  |  *, ?, [ ]  | 
+ |  Bash expansion  |  History shortcuts  |  Brace expansion and command substitution  | 
+ |  Deletion  |  Not a main focus  |  rm, rmdir, rm -r  | 
+ |  Links  |  Not a main focus  |  Hard links with ln  | 
+ |  Remote access  |  Not required  |  SSH to serverb  | 
+
+Final tips for the practical exam
+
+1. Know what each command does before typing it. In particular, understand the difference between cp (copy) and mv (move), and between rm, rmdir, and rm -r.
+2. Practise path symbols: ~ means home, . means current directory, .. means parent directory, and cd - switches to the previous working directory.
+3. Do not confuse brace expansion with wildcard matching. {1..5} generates strings; * and [ ] match filenames.
+4. Be careful with deletion commands, especially rm -r and wildcard patterns such as rm mystery*.
+5. In Assignment 2, do most file operations on serverb, then use exit to return to workstation before grading and finishing.
+6. Use the lab's own grade command to confirm completion. Do not assume that a command's successful output alone means every grading check has passed.

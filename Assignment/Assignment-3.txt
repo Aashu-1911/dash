@@ -1,0 +1,17 @@
+lab start help-review               # Prepares the lab environment and required resources.
+man man                             # Opens the man page to check how man pages are formatted for printing.
+ls > /tmp/my-file-names             # Example redirecting directory listing output into a file.
+man -t passwd > passwd.ps           # Formats the passwd man page as PostScript and saves it to passwd.ps.
+ls -al                              # Lists all files, including hidden files and detailed permissions/sizes.
+file /home/student/passwd.ps        # Identifies the file format of passwd.ps.
+less /home/student/passwd.ps        # Inspects the contents of passwd.ps interactively.
+man -k postscript viewer            # Searches man page descriptions for keywords like postscript or viewer.
+man evince                          # Opens the man page for the evince document viewer.
+evince /home/student/passwd.ps      # Opens passwd.ps in evince using default mode.
+evince -w /home/student/passwd.ps   # Opens passwd.ps in evince preview mode.
+evince -i 3 /home/student/passwd.ps # Opens passwd.ps starting directly on page 3.
+man lp                              # Opens the man page for the lp printing command.
+lp passwd.ps -P 2-3                 # Prints only pages 2 and 3 of passwd.ps to the default printer.
+firefox /usr/share/doc              # Opens /usr/share/doc in Firefox to browse package documentation.
+lab grade help-review               # Grades your lab work and reports any failures.
+lab finish help-review              # Cleans up and completes the lab exercise.

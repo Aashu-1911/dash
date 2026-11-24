@@ -1,0 +1,16 @@
+lab start rhcsa-rh124-review5                                         # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                                   # Logs into serverb as the student user via SSH.
+sudo -i                                                               # Switches to an interactive root login shell (password: student).
+lsblk -fs                                                             # Lists block devices, filesystems, and UUIDs to identify vdb1 (XFS).
+mkdir /review5-disk                                                   # Creates the /review5-disk mount point directory.
+mount /dev/vdb1 /review5-disk                                         # Mounts the vdb1 XFS partition onto /review5-disk (adjust device if different).
+df -Th                                                                # Verifies that /dev/vdb1 is mounted on /review5-disk as xfs.
+find / -iname review5-path 2>/dev/null                                # Finds review5-path (case-insensitive) and discards error messages.
+echo "/var/tmp/review5-path" >> /review5-disk/review5-path.txt        # Saves the absolute path of review5-path to review5-path.txt.
+find / -user contractor1 -group contractor -perm 640 2>/dev/null      # Finds files owned by contractor1:contractor with 640 permissions.
+echo "/usr/share/review5-perms" >> /review5-disk/review5-perms.txt      # Saves matching file path(s) to review5-perms.txt.
+find / -type f -size 100c 2>/dev/null                                  # Finds regular files that are exactly 100 bytes in size.
+find / -type f -size 100c 2>/dev/null > /review5-disk/review5-size.txt  # Saves all 100-byte file paths to /review5-disk/review5-size.txt.
+exit                                                                  # Exits the root shell (run exit once more to return to workstation).
+lab grade rhcsa-rh124-review5                                         # Grades the lab exercise on workstation and reports any failures.
+lab finish rhcsa-rh124-review5                                        # Cleans up and completes the lab exercise on workstation.

@@ -1,0 +1,15 @@
+lab start net-review                                                                                                          # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                                                                                           # Logs into serverb as the student user via SSH.
+sudo -i                                                                                                                       # Switches to an interactive root login shell (password: student).
+ip link                                                                                                                       # Lists network interfaces and MAC addresses to identify eth0 (52:54:00:00:fa:0b).
+nmcli con show --active                                                                                                       # Displays active NetworkManager connections and their associated devices (System eth0).
+nmcli con add con-name lab ifname eth0 type ethernet ipv4.method manual ipv4.dns '172.25.250.254' ipv4.addresses '172.25.250.11/24' ipv4.gateway '172.25.250.254'  # Creates the static 'lab' connection profile on eth0.
+nmcli con mod "lab" connection.autoconnect yes                                                                                # Configures the 'lab' connection to start automatically.
+nmcli con mod "System eth0" connection.autoconnect no                                                                         # Prevents 'System eth0' from connecting automatically.
+nmcli con mod "lab" +ipv4.addresses '10.0.1.1/24'                                                                             # Adds a second static IPv4 address (10.0.1.1/24) to the 'lab' connection.
+nmcli con reload                                                                                                              # Reloads NetworkManager connection profiles.
+echo "10.0.1.1 private" >> /etc/hosts                                                                                         # Maps 10.0.1.1 to the hostname 'private' in /etc/hosts.
+systemctl reboot                                                                                                              # Reboots serverb and returns to the workstation shell.
+ping -c3 serverb                                                                                                              # Verifies serverb is reachable after reboot by sending 3 ICMP echo requests.
+lab grade net-review                                                                                                          # Grades the lab exercise on workstation and reports any failures.
+lab finish net-review                                                                                                         # Cleans up and completes the lab exercise on workstation.

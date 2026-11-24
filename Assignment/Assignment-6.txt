@@ -1,0 +1,37 @@
+lab start perms-review                                     # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                                        # Logs into serverb as the student user via SSH.
+sudo -i                                                    # Switches to an interactive root login shell (password: student).
+mkdir /home/techdocs                                       # Creates the /home/techdocs shared directory.
+chown :techdocs /home/techdocs                               # Sets group ownership of /home/techdocs to the techdocs group.
+su - tech1                                                 # Switches to a login shell for user tech1.
+touch /home/techdocs/techdoc1.txt                          # Attempts to create techdoc1.txt (fails without group write permission).
+ls -ld /home/techdocs/                                     # Displays permissions and ownership of /home/techdocs.
+exit                                                       # Exits the tech1 shell back to root.
+chmod 2770 /home/techdocs                                  # Sets setgid (2), rwx for owner/group (77), and no access for others (0).
+ls -ld /home/techdocs                                      # Verifies setgid (s) and rwx permissions on /home/techdocs.
+su - tech1                                                 # Switches to the tech1 login shell.
+touch /home/techdocs/techdoc1.txt                          # Creates techdoc1.txt inside /home/techdocs as tech1.
+ls -l /home/techdocs/techdoc1.txt                          # Checks permissions and group ownership of techdoc1.txt.
+echo "This is the first tech doc." > /home/techdocs/techdoc1.txt  # Writes text into techdoc1.txt.
+exit                                                       # Exits the tech1 shell back to root.
+su - tech2                                                 # Switches to the tech2 login shell.
+cd /home/techdocs                                          # Changes into /home/techdocs.
+cat techdoc1.txt                                           # Reads techdoc1.txt as tech2.
+touch /home/techdocs/techdoc2.txt                          # Creates techdoc2.txt inside /home/techdocs as tech2.
+ls -l                                                      # Lists files to confirm group ownership is inherited via setgid.
+exit                                                       # Exits the tech2 shell back to root.
+su - database1                                             # Switches to the database1 login shell.
+cat /home/techdocs/techdoc1.txt                          # Verifies non-member database1 is denied read access.
+ls -l /home/techdocs/techdoc1.txt                          # Verifies non-member database1 cannot inspect the file.
+exit                                                       # Exits the database1 shell back to root.
+su - student                                               # Switches to the student login shell to inspect current umask.
+umask                                                      # Displays the current umask value (0022).
+exit                                                       # Exits the student shell back to root.
+cat /etc/login.defs                                        # Views /etc/login.defs (edit UMASK to 007 using your editor).
+exit                                                       # Exits the root shell back to student on serverb.
+exit                                                       # Closes the SSH connection and returns to workstation.
+ssh student@serverb                                        # Reconnects via SSH to test the updated login umask.
+umask                                                      # Confirms the updated umask value (0007) on serverb.
+exit                                                       # Exits serverb back to workstation.
+lab grade perms-review                                     # Grades the lab exercise and reports any failures.
+lab finish perms-review                                    # Cleans up and completes the lab exercise.

@@ -1,0 +1,16 @@
+lab start services-review           # Prepares the lab environment and required resources on workstation.
+ssh student@serverb                 # Logs into serverb as the student user via SSH.
+sudo -i                             # Switches to an interactive root login shell (password: student).
+systemctl status psacct             # Checks psacct service status (inactive and disabled by default).
+systemctl start psacct              # Starts the psacct service immediately.
+systemctl is-active psacct          # Verifies that the psacct service is running (active).
+systemctl enable psacct             # Configures psacct to start automatically at system boot.
+systemctl is-enabled psacct         # Confirms psacct is enabled for boot.
+systemctl status rsyslog            # Checks rsyslog service status (press q to exit pager).
+systemctl stop rsyslog              # Stops the running rsyslog service.
+systemctl is-active rsyslog         # Confirms rsyslog is stopped (inactive).
+systemctl disable rsyslog            # Prevents rsyslog from starting automatically at system boot.
+systemctl is-enabled rsyslog        # Confirms rsyslog is disabled at boot.
+systemctl reboot                    # Reboots serverb and closes the SSH session back to workstation.
+lab grade services-review           # Grades the lab exercise and reports any failures.
+lab finish services-review          # Cleans up and completes the lab exercise.

@@ -1,0 +1,1655 @@
+============================================================
+LAB: CONTROL ACCESS TO FILES
+============================================================
+
+1. INTRODUCTION
+---------------
+
+In Linux, file permissions control who can read, modify, and execute files and directories.
+
+Linux provides a permission system that allows administrators to:
+
+1. Control access to files and directories.
+2. Allow multiple users to work together.
+3. Assign group ownership to files.
+4. Prevent unauthorized users from accessing confidential files.
+5. Automatically assign group ownership to newly created files.
+6. Set default permissions using umask.
+
+In this practical, we create a shared directory named:
+
+/home/techdocs
+
+Users belonging to the techdocs group can create and access files inside this directory.
+
+Users outside the techdocs group cannot access the directory.
+
+We also configure the SETGID permission and change the default umask.
+
+------------------------------------------------------------
+2. OBJECTIVES OF THE LAB
+------------------------------------------------------------
+
+1. Create a directory where users can collaboratively work on files.
+
+2. Automatically assign group ownership to newly created files.
+
+3. Prevent users outside a particular group from accessing files.
+
+4. Understand Linux file and directory permissions.
+
+5. Understand special permissions such as SETGID.
+
+6. Configure the default umask for login users.
+
+------------------------------------------------------------
+3. IMPORTANT LINUX FILE PERMISSIONS
+------------------------------------------------------------
+
+Linux provides three basic permissions:
+
+A. READ (r)
+   Numeric value: 4
+
+   For files:
+   Allows users to read file contents.
+
+   For directories:
+   Allows users to list the directory contents.
+
+B. WRITE (w)
+   Numeric value: 2
+
+   For files:
+   Allows users to modify file contents.
+
+   For directories:
+   Allows users to create, delete, and rename entries inside
+   the directory (subject to other restrictions).
+
+C. EXECUTE (x)
+   Numeric value: 1
+
+   For files:
+   Allows users to execute the file as a program or script.
+
+   For directories:
+   Allows users to enter the directory and access its contents
+   when they know the required filenames.
+
+IMPORTANT:
+
+For directories, execute permission is particularly important.
+Without execute permission, users cannot normally access files
+inside that directory, even if they know the filenames.
+
+------------------------------------------------------------
+4. THREE CATEGORIES OF LINUX PERMISSIONS
+------------------------------------------------------------
+
+Linux permissions are divided into three categories.
+
+1. USER (u)
+   The owner of the file or directory.
+
+2. GROUP (g)
+   Users belonging to the group assigned to the file or directory.
+
+3. OTHER (o)
+   All remaining users who are neither the owner nor members
+   of the assigned group.
+
+Example:
+
+-rwxr-xr--
+
+Breakdown:
+
+-    File type
+rwx  User permissions
+r-x  Group permissions
+r--  Other permissions
+
+Numeric representation:
+
+User  = 7 (4+2+1)
+Group = 5 (4+0+1)
+Other = 4 (4+0+0)
+
+Therefore:
+
+rwxr-xr-- = 754
+
+------------------------------------------------------------
+5. UNDERSTANDING THE PERMISSION NUMBERS
+------------------------------------------------------------
+
+Permission values:
+
+r = 4
+w = 2
+x = 1
+
+Common combinations:
+
+0 = ---
+1 = --x
+2 = -w-
+3 = -wx
+4 = r--
+5 = r-x
+6 = rw-
+7 = rwx
+
+Examples:
+
+chmod 755 file.txt
+
+User  = rwx
+Group = r-x
+Other = r-x
+
+chmod 700 file.txt
+
+User  = rwx
+Group = ---
+Other = ---
+
+chmod 770 directory
+
+User  = rwx
+Group = rwx
+Other = ---
+
+chmod 644 file.txt
+
+User  = rw-
+Group = r--
+Other = r--
+
+------------------------------------------------------------
+6. IMPORTANT COMMANDS USED IN THIS LAB
+------------------------------------------------------------
+
+A. ssh
+
+Purpose:
+Connect to another Linux machine remotely.
+
+Syntax:
+
+ssh username@hostname
+
+Example:
+
+ssh student@serverb
+
+Explanation:
+
+student = Username
+serverb  = Remote machine hostname
+
+B. sudo -i
+
+Purpose:
+Switch to the root user and start a root login shell.
+
+Command:
+
+sudo -i
+
+You will be asked for the current user's password.
+
+Example:
+
+sudo -i
+
+After successful authentication:
+
+[root@serverb ~]#
+
+C. mkdir
+
+Purpose:
+Create a new directory.
+
+Syntax:
+
+mkdir directory_name
+
+Example:
+
+mkdir /home/techdocs
+
+Creates a directory named techdocs inside /home.
+
+D. chown
+
+Purpose:
+Change ownership of a file or directory.
+
+Syntax:
+
+chown user:group filename
+
+To change only the group ownership:
+
+chown :groupname filename
+
+Example:
+
+chown :techdocs /home/techdocs
+
+Explanation:
+
+:techdocs = Assign the techdocs group.
+ /home/techdocs = Target directory.
+
+The owner remains root, but the group ownership changes
+to techdocs.
+
+E. su
+
+Purpose:
+Switch to another user account.
+
+Syntax:
+
+su - username
+
+Examples:
+
+su - tech1
+su - tech2
+su - database1
+
+The hyphen (-) starts a login shell.
+
+It loads the target user's login environment, including
+their home directory and environment settings.
+
+F. touch
+
+Purpose:
+Create an empty file.
+
+Syntax:
+
+touch filename
+
+Example:
+
+touch /home/techdocs/techdoc1.txt
+
+Creates an empty file named techdoc1.txt.
+
+G. ls -l
+
+Purpose:
+Display detailed file information and permissions.
+
+Command:
+
+ls -l
+
+Example output:
+
+-rw-r--r--. 1 tech1 techdocs 28 Feb 5 17:43 techdoc1.txt
+
+Explanation:
+
+-rw-r--r-- = Permissions
+1           = Hard link count
+tech1       = Owner
+techdocs    = Group
+28          = File size in bytes
+Feb 5       = Modification date
+17:43       = Modification time
+techdoc1.txt = Filename
+
+H. ls -ld
+
+Purpose:
+Display information about a directory itself instead of
+listing its contents.
+
+Command:
+
+ls -ld /home/techdocs
+
+Important difference:
+
+ls -l directory
+
+Displays the contents of the directory.
+
+ls -ld directory
+
+Displays the directory's own permissions and ownership.
+
+I. chmod
+
+Purpose:
+Change file or directory permissions.
+
+Syntax:
+
+chmod permission filename
+
+Example:
+
+chmod 770 /home/techdocs
+
+Changes permissions to:
+
+User  = rwx
+Group = rwx
+Other = ---
+
+J. cat
+
+Purpose:
+Display the contents of a file.
+
+Syntax:
+
+cat filename
+
+Example:
+
+cat techdoc1.txt
+
+K. echo
+
+Purpose:
+Display text or write text into a file.
+
+Example:
+
+echo "Hello Linux" > file.txt
+
+The > operator writes the text into the file.
+
+IMPORTANT:
+
+> overwrites existing file contents.
+
+>> appends text to the end of an existing file.
+
+Examples:
+
+echo "First line" > file.txt
+echo "Second line" >> file.txt
+
+L. exit
+
+Purpose:
+Exit the current shell or user session.
+
+Example:
+
+exit
+
+If you switched to another user using su, exit returns
+you to the previous user.
+
+M. umask
+
+Purpose:
+Display or configure the default permission mask.
+
+Command:
+
+umask
+
+Example output:
+
+0022
+
+N. grep
+
+Purpose:
+Search for a particular word or pattern inside a file.
+
+Example:
+
+grep UMASK /etc/login.defs
+
+This displays lines containing UMASK.
+
+O. lab
+
+Purpose:
+Manage the practical exercise environment.
+
+Commands:
+
+lab start perms-review
+lab grade perms-review
+lab finish perms-review
+
+------------------------------------------------------------
+7. UNDERSTANDING GROUP OWNERSHIP
+------------------------------------------------------------
+
+Linux allows multiple users to belong to the same group.
+
+Example:
+
+Group: techdocs
+
+Members:
+- tech1
+- tech2
+
+Both users belong to the techdocs group.
+
+This allows them to share files and directories.
+
+To check the groups of a user:
+
+groups tech1
+
+To display detailed user and group information:
+
+id tech1
+
+Example output:
+
+uid=1001(tech1) gid=1001(tech1) groups=1001(tech1),2001(techdocs)
+
+Explanation:
+
+uid = User ID
+gid = Primary Group ID
+groups = All groups the user belongs to
+
+IMPORTANT:
+
+Primary group:
+The main group assigned to a user.
+
+Supplementary group:
+An additional group to which a user belongs.
+
+A user can belong to multiple supplementary groups.
+
+The tech1 and tech2 users are members of the techdocs group.
+
+The database1 user is not a member of the techdocs group.
+
+------------------------------------------------------------
+8. UNDERSTANDING SETGID PERMISSION
+------------------------------------------------------------
+
+SETGID stands for Set Group ID.
+
+Numeric value:
+
+2
+
+SETGID has different behavior depending on whether it is
+applied to a file or a directory.
+
+A. SETGID ON EXECUTABLE FILES
+
+When applied to an executable file, the process runs with
+the effective group ID of the file's group.
+
+B. SETGID ON DIRECTORIES
+
+When applied to a directory, newly created files and
+subdirectories inherit the directory's group ownership.
+
+This is particularly useful for collaborative directories.
+
+Example:
+
+chmod 2770 /home/techdocs
+
+Here:
+
+2 = SETGID
+7 = Owner permissions (rwx)
+7 = Group permissions (rwx)
+0 = Other permissions (---)
+
+Result:
+
+drwxrws---
+
+Explanation:
+
+d = Directory
+rwx = Owner has read, write and execute permissions
+rws = Group has read, write and execute permissions
+--- = Other users have no permissions
+
+Notice the letter s.
+
+The s indicates that SETGID is enabled along with the
+group execute permission.
+
+IMPORTANT:
+
+Without SETGID:
+
+A file created by tech1 generally receives tech1's
+primary group as its group ownership.
+
+With SETGID:
+
+A file created inside /home/techdocs inherits the
+techdocs group.
+
+Example:
+
+tech1 creates techdoc1.txt.
+
+Owner = tech1
+Group = techdocs
+
+tech2 creates techdoc2.txt.
+
+Owner = tech2
+Group = techdocs
+
+Both files automatically belong to the techdocs group.
+
+------------------------------------------------------------
+9. UNDERSTANDING SPECIAL PERMISSIONS
+------------------------------------------------------------
+
+Linux has three special permissions.
+
+1. SETUID (4)
+
+   Used mainly on executable files.
+
+   The program runs with the effective user ID of the
+   file owner.
+
+2. SETGID (2)
+
+   On executable files, it affects the effective group ID.
+
+   On directories, new files and directories inherit the
+   parent directory's group ownership.
+
+3. STICKY BIT (1)
+
+   Commonly used on shared directories.
+
+   It restricts deletion and renaming of files so that
+   generally only the file owner, directory owner, or root
+   can delete or rename an entry.
+
+Example:
+
+chmod 1777 /shared
+
+This creates a directory with the sticky bit and full
+permissions for everyone.
+
+Common example:
+
+/tmp
+
+The /tmp directory commonly uses sticky-bit permissions.
+
+------------------------------------------------------------
+10. UNDERSTANDING UMASK
+------------------------------------------------------------
+
+UMASK stands for User File Creation Mode Mask.
+
+It controls which permissions are removed from the default
+permissions when a user creates new files and directories.
+
+It does not directly assign permissions.
+
+Default starting permissions:
+
+Files       = 666 (rw-rw-rw-)
+Directories = 777 (rwxrwxrwx)
+
+UMASK removes permissions from these defaults.
+
+Example:
+
+umask 0022
+
+For files:
+
+666 - masked permissions = 644
+
+Final permissions:
+
+rw-r--r--
+
+For directories:
+
+777 - masked permissions = 755
+
+Final permissions:
+
+rwxr-xr-x
+
+Another example:
+
+umask 0007
+
+For files:
+
+666 with mask 007 = 660
+
+Final permissions:
+
+rw-rw----
+
+For directories:
+
+777 with mask 007 = 770
+
+Final permissions:
+
+rwxrwx---
+
+Explanation of umask 0007:
+
+First digit = Special permission mask position
+Second digit = User mask
+Third digit = Group mask
+Fourth digit = Other mask
+
+The last digit 7 means:
+
+Other users lose:
+Read  = 4
+Write = 2
+Execute = 1
+
+Total = 7
+
+Therefore, other users receive no permissions on newly
+created files or directories.
+
+IMPORTANT:
+
+Umask 0007 does not automatically grant execute permission
+to newly created regular files.
+
+Regular files normally start with 666, so their resulting
+permissions are 660.
+
+Directories start with 777, so their resulting permissions
+are 770.
+
+------------------------------------------------------------
+11. DIFFERENCE BETWEEN CHMOD AND UMASK
+------------------------------------------------------------
+
+CHMOD:
+
+Changes the permissions of an existing file or directory.
+
+Example:
+
+chmod 770 /home/techdocs
+
+UMASK:
+
+Controls default permissions of newly created files and
+directories.
+
+Example:
+
+umask 0007
+
+Difference:
+
+chmod changes existing permissions.
+
+umask controls the permissions assigned during creation.
+
+------------------------------------------------------------
+12. UNDERSTANDING /etc/login.defs
+------------------------------------------------------------
+
+Location:
+
+/etc/login.defs
+
+Purpose:
+
+This configuration file contains default settings related
+to user login and account management.
+
+It can contain settings such as:
+
+- Password aging policies.
+- Default user configuration.
+- Login-related settings.
+- Default UMASK.
+
+In this practical, we modify the UMASK setting.
+
+To view the file:
+
+cat /etc/login.defs
+
+To search for UMASK:
+
+grep UMASK /etc/login.defs
+
+Example configuration:
+
+UMASK 007
+
+This specifies the default umask for login-related
+user account configuration.
+
+IMPORTANT:
+
+/etc/login.defs is not a universal live configuration
+mechanism for every shell or every user session.
+
+The actual umask can also be configured by PAM,
+shell startup files, or system-specific login mechanisms.
+
+In this lab, the expected behavior is that a fresh
+student login session receives umask 0007.
+
+------------------------------------------------------------
+13. COMPLETE PRACTICAL EXPLANATION
+------------------------------------------------------------
+
+STEP 1: PREPARE THE LAB
+
+Command:
+
+lab start perms-review
+
+Explanation:
+
+Prepares the required machines, users, groups and resources
+for the exercise.
+
+Run this command on workstation as student.
+
+STEP 2: CONNECT TO SERVERB
+
+Command:
+
+ssh student@serverb
+
+Explanation:
+
+Connects remotely to the serverb machine using the student
+account.
+
+STEP 3: BECOME ROOT
+
+Command:
+
+sudo -i
+
+Explanation:
+
+Switches to the root user.
+
+Root has administrative privileges and can modify
+system-wide permissions and ownership.
+
+Password:
+
+student
+
+STEP 4: CREATE THE SHARED DIRECTORY
+
+Command:
+
+mkdir /home/techdocs
+
+Explanation:
+
+Creates the techdocs directory inside /home.
+
+STEP 5: CHANGE GROUP OWNERSHIP
+
+Command:
+
+chown :techdocs /home/techdocs
+
+Explanation:
+
+Changes the group ownership of the directory to techdocs.
+
+The owner remains root.
+
+Expected ownership:
+
+Owner = root
+Group = techdocs
+
+STEP 6: TEST ACCESS BEFORE CHANGING PERMISSIONS
+
+Command:
+
+su - tech1
+
+Explanation:
+
+Switches to the tech1 user.
+
+Now execute:
+
+touch /home/techdocs/techdoc1.txt
+
+Expected result:
+
+Permission denied
+
+WHY?
+
+Initially, the directory permissions are:
+
+drwxr-xr-x
+
+Breakdown:
+
+Owner = rwx
+Group = r-x
+Other = r-x
+
+The techdocs group has read and execute permissions,
+but it does not have write permission.
+
+Therefore, tech1 cannot create a file.
+
+STEP 7: CHECK DIRECTORY PERMISSIONS
+
+Command:
+
+ls -ld /home/techdocs/
+
+Expected output:
+
+drwxr-xr-x. 2 root techdocs 6 ... /home/techdocs/
+
+Explanation:
+
+root = Directory owner
+techdocs = Directory group
+
+The group does not have write permission.
+
+STEP 8: RETURN TO ROOT
+
+Command:
+
+exit
+
+Explanation:
+
+Returns from the tech1 shell to the root shell.
+
+STEP 9: APPLY SETGID AND PERMISSIONS
+
+Command:
+
+chmod 2770 /home/techdocs
+
+Explanation:
+
+2 = SETGID
+7 = Owner gets rwx
+7 = Group gets rwx
+0 = Other gets no permission
+
+Now techdocs group members can create and access files.
+
+SETGID ensures that newly created files inherit the
+techdocs group ownership.
+
+STEP 10: VERIFY PERMISSIONS
+
+Command:
+
+ls -ld /home/techdocs
+
+Expected output:
+
+drwxrws---. 2 root techdocs 6 ... /home/techdocs/
+
+Explanation:
+
+d = Directory
+rwx = Owner permissions
+rws = Group permissions with SETGID
+--- = Other users have no permissions
+
+STEP 11: CREATE THE FIRST FILE USING TECH1
+
+Switch to tech1:
+
+su - tech1
+
+Create the file:
+
+touch /home/techdocs/techdoc1.txt
+
+Check ownership:
+
+ls -l /home/techdocs/techdoc1.txt
+
+Expected output:
+
+-rw-r--r--. 1 tech1 techdocs 0 ... techdoc1.txt
+
+Explanation:
+
+Owner = tech1
+Group = techdocs
+
+The group ownership is automatically inherited because
+SETGID is enabled on the parent directory.
+
+Add text:
+
+echo "This is the first tech doc." > /home/techdocs/techdoc1.txt
+
+Explanation:
+
+Writes text into the file.
+
+The > operator overwrites existing content.
+
+Return to root:
+
+exit
+
+STEP 12: VERIFY ACCESS USING TECH2
+
+Switch to tech2:
+
+su - tech2
+
+Change directory:
+
+cd /home/techdocs
+
+Display the first file:
+
+cat techdoc1.txt
+
+Expected output:
+
+This is the first tech doc.
+
+Why does tech2 have access?
+
+Because tech2 belongs to the techdocs group.
+
+The file has read permission for the group.
+
+Create another file:
+
+touch /home/techdocs/techdoc2.txt
+
+Check both files:
+
+ls -l
+
+Expected output:
+
+-rw-r--r--. 1 tech1 techdocs 28 ... techdoc1.txt
+-rw-r--r--. 1 tech2 techdocs  0 ... techdoc2.txt
+
+Explanation:
+
+Both files belong to the techdocs group.
+
+However, each file has a different owner.
+
+Return to root:
+
+exit
+
+STEP 13: VERIFY ACCESS USING DATABASE1
+
+Switch to database1:
+
+su - database1
+
+Try reading the file:
+
+cat /home/techdocs/techdoc1.txt
+
+Expected result:
+
+Permission denied
+
+Try listing the file:
+
+ls -l /home/techdocs/techdoc1.txt
+
+Expected result:
+
+Permission denied
+
+WHY?
+
+database1 is not a member of the techdocs group.
+
+The directory permissions are:
+
+drwxrws---
+
+Other users have no permissions.
+
+Therefore, database1 cannot access the directory.
+
+Return to root:
+
+exit
+
+STEP 14: CHECK THE DEFAULT UMASK
+
+Switch to student:
+
+su - student
+
+Display the current umask:
+
+umask
+
+Expected output before modification:
+
+0022
+
+Explanation:
+
+The default umask is 0022.
+
+It generally produces:
+
+Files = 644
+Directories = 755
+
+STEP 15: MODIFY /etc/login.defs
+
+Return to root if necessary.
+
+Open the configuration file:
+
+vi /etc/login.defs
+
+Search for:
+
+/UMASK
+
+Find the existing UMASK definition.
+
+Change it to:
+
+UMASK 007
+
+Save and exit Vim:
+
+Press Esc.
+
+Type:
+
+:wq
+
+Press Enter.
+
+Alternative command to view the setting:
+
+grep UMASK /etc/login.defs
+
+Expected configuration:
+
+UMASK 007
+
+IMPORTANT:
+
+Do not add multiple conflicting UMASK definitions.
+Modify the existing appropriate definition.
+
+STEP 16: VERIFY THE NEW UMASK
+
+Exit the current login sessions.
+
+Return to workstation:
+
+exit
+
+Then reconnect:
+
+ssh student@serverb
+
+Check:
+
+umask
+
+Expected output:
+
+0007
+
+Explanation:
+
+The new login session receives the updated default umask.
+
+Resulting default permissions:
+
+New files       = 660
+New directories = 770
+
+Other users cannot access newly created files or directories
+through their ordinary permission bits.
+
+STEP 17: RETURN TO WORKSTATION
+
+Command:
+
+exit
+
+This closes the SSH connection and returns you to workstation.
+
+STEP 18: GRADE THE PRACTICAL
+
+Command:
+
+lab grade perms-review
+
+Explanation:
+
+Checks whether all required practical tasks have been
+completed correctly.
+
+If any task fails, correct the configuration and run
+the grading command again.
+
+STEP 19: FINISH THE PRACTICAL
+
+Command:
+
+lab finish perms-review
+
+Explanation:
+
+Cleans up the lab environment and prepares the system
+for upcoming exercises.
+
+------------------------------------------------------------
+14. IMPORTANT DIFFERENCE: DIRECTORY PERMISSIONS VS FILE
+PERMISSIONS
+------------------------------------------------------------
+
+Directory permissions:
+
+r = List directory contents.
+w = Create, delete or rename directory entries.
+x = Enter and access the directory.
+
+File permissions:
+
+r = Read file contents.
+w = Modify file contents.
+x = Execute the file.
+
+IMPORTANT CONCEPT:
+
+A user may have permission to read a file but still be
+unable to access it if the user does not have execute
+permission on one of its parent directories.
+
+Similarly, write permission on a directory does not
+automatically mean write permission on every file inside it.
+
+------------------------------------------------------------
+15. IMPORTANT DIFFERENCE: SETGID VS SUPPLEMENTARY GROUP
+------------------------------------------------------------
+
+SUPPLEMENTARY GROUP:
+
+Determines which additional groups a user belongs to.
+
+Example:
+
+tech1 belongs to techdocs.
+
+SETGID:
+
+Ensures that files and subdirectories created inside
+a SETGID directory inherit that directory's group.
+
+Example:
+
+chmod 2770 /home/techdocs
+
+Both concepts work together:
+
+1. tech1 and tech2 belong to techdocs.
+2. The directory is assigned to techdocs.
+3. SETGID is enabled.
+4. Newly created files inherit techdocs group ownership.
+
+------------------------------------------------------------
+16. IMPORTANT DIFFERENCE: CHOWN VS CHMOD
+------------------------------------------------------------
+
+CHOWN:
+
+Changes file ownership.
+
+Example:
+
+chown tech1:techdocs file.txt
+
+Owner = tech1
+Group = techdocs
+
+CHMOD:
+
+Changes file permissions.
+
+Example:
+
+chmod 640 file.txt
+
+Owner = rw-
+Group = r--
+Other = ---
+
+Remember:
+
+chown = Ownership
+chmod = Permissions
+
+------------------------------------------------------------
+17. USEFUL COMMANDS FOR PRACTICE
+------------------------------------------------------------
+
+1. pwd
+
+Displays the current working directory.
+
+2. whoami
+
+Displays the current username.
+
+3. id
+
+Displays UID, GID and group membership.
+
+4. groups
+
+Displays the groups of the current user.
+
+5. ls -l
+
+Displays detailed file information.
+
+6. ls -ld directory
+
+Displays directory permissions and ownership.
+
+7. stat filename
+
+Displays detailed file metadata and permissions.
+
+8. chmod 770 directory
+
+Gives owner and group full permissions.
+
+9. chmod 2770 directory
+
+Enables SETGID and gives owner and group full permissions.
+
+10. chown :groupname directory
+
+Changes group ownership.
+
+11. chown user:group filename
+
+Changes owner and group ownership.
+
+12. umask
+
+Displays the current umask.
+
+13. umask 0007
+
+Changes the current shell's umask.
+
+14. grep UMASK /etc/login.defs
+
+Searches for the UMASK definition.
+
+15. getent group techdocs
+
+Displays information about the techdocs group.
+
+16. namei -l /home/techdocs/techdoc1.txt
+
+Displays permissions of each component in the file path.
+
+------------------------------------------------------------
+18. COMMON ERRORS AND THEIR REASONS
+------------------------------------------------------------
+
+ERROR 1:
+
+Permission denied while creating a file.
+
+Reason:
+
+The user does not have write and execute permissions
+on the target directory.
+
+Solution:
+
+Check permissions:
+
+ls -ld /home/techdocs
+
+For this practical:
+
+chmod 2770 /home/techdocs
+
+ERROR 2:
+
+Permission denied while reading a file.
+
+Possible reasons:
+
+1. The user lacks read permission on the file.
+2. The user lacks execute permission on a parent directory.
+3. The user is not in the appropriate group.
+
+Solution:
+
+Check:
+
+id username
+ls -l filename
+ls -ld /home/techdocs
+
+ERROR 3:
+
+New files have the wrong group ownership.
+
+Reason:
+
+SETGID is not enabled on the parent directory, or the
+directory has the wrong group ownership.
+
+Solution:
+
+chown :techdocs /home/techdocs
+
+chmod 2770 /home/techdocs
+
+ERROR 4:
+
+UMASK still shows 0022.
+
+Possible reasons:
+
+1. The current session was started before the configuration
+   was changed.
+2. Another login configuration overrides the setting.
+3. The login mechanism does not apply the setting from
+   /etc/login.defs.
+
+Solution:
+
+Open a fresh login session and check again.
+
+If necessary, inspect the system's PAM and shell startup
+configuration.
+
+------------------------------------------------------------
+19. IMPORTANT VIVA QUESTIONS AND ANSWERS
+------------------------------------------------------------
+
+Q1. What are file permissions in Linux?
+
+Ans: File permissions control who can read, write and
+execute files or access directories.
+
+Q2. What are the three basic permissions?
+
+Ans: Read (4), Write (2), Execute (1).
+
+Q3. What are the three permission categories?
+
+Ans: User, Group and Other.
+
+Q4. What is chmod?
+
+Ans: chmod changes permissions of files and directories.
+
+Q5. What is chown?
+
+Ans: chown changes file or directory ownership.
+
+Q6. What is SETGID?
+
+Ans: SETGID is a special permission. On directories,
+it ensures that newly created files and directories
+inherit the parent directory's group ownership.
+
+Q7. What is the numeric value of SETGID?
+
+Ans: 2.
+
+Q8. What does chmod 2770 mean?
+
+Ans:
+2 = SETGID
+7 = Owner gets rwx
+7 = Group gets rwx
+0 = Other gets no permissions.
+
+Q9. What is umask?
+
+Ans: Umask controls which default permissions are removed
+when new files and directories are created.
+
+Q10. What is the default starting permission for files?
+
+Ans: 666.
+
+Q11. What is the default starting permission for directories?
+
+Ans: 777.
+
+Q12. What is the result of umask 0007?
+
+Ans:
+Files = 660
+Directories = 770
+
+Q13. What is the difference between primary and supplementary
+groups?
+
+Ans: A primary group is the main group assigned to a user.
+Supplementary groups are additional groups to which the
+user belongs.
+
+Q14. What is the purpose of ls -ld?
+
+Ans: It displays the permissions and ownership of a directory
+itself instead of listing its contents.
+
+Q15. Why did tech1 initially receive Permission denied?
+
+Ans: The techdocs group did not have write permission on
+the /home/techdocs directory.
+
+Q16. Why can tech2 read techdoc1.txt?
+
+Ans: tech2 belongs to the techdocs group, and the file
+provides read permission to its group.
+
+Q17. Why can't database1 access the directory?
+
+Ans: database1 is not a member of techdocs, and the directory
+does not provide any permissions to other users.
+
+Q18. Why is SETGID used in this practical?
+
+Ans: To ensure all files created inside the shared directory
+automatically inherit the techdocs group ownership.
+
+Q19. What is the difference between > and >>?
+
+Ans:
+> overwrites file contents.
+>> appends content to the existing file.
+
+Q20. What is the purpose of /etc/login.defs?
+
+Ans: It contains default settings related to login and
+user account management, including a UMASK setting.
+
+------------------------------------------------------------
+20. FINAL COMMAND REVISION
+------------------------------------------------------------
+
+Prepare lab:
+
+lab start perms-review
+
+Connect:
+
+ssh student@serverb
+
+Become root:
+
+sudo -i
+
+Create directory:
+
+mkdir /home/techdocs
+
+Change group:
+
+chown :techdocs /home/techdocs
+
+Switch user:
+
+su - tech1
+
+Create file:
+
+touch /home/techdocs/techdoc1.txt
+
+Check permissions:
+
+ls -ld /home/techdocs
+
+Set SETGID and permissions:
+
+chmod 2770 /home/techdocs
+
+Check again:
+
+ls -ld /home/techdocs
+
+Add text:
+
+echo "This is the first tech doc." > /home/techdocs/techdoc1.txt
+
+Read file:
+
+cat /home/techdocs/techdoc1.txt
+
+Switch to another user:
+
+su - tech2
+
+Display file:
+
+cat /home/techdocs/techdoc1.txt
+
+Create second file:
+
+touch /home/techdocs/techdoc2.txt
+
+Check ownership:
+
+ls -l /home/techdocs
+
+Test unauthorized access:
+
+su - database1
+
+cat /home/techdocs/techdoc1.txt
+
+Check umask:
+
+umask
+
+Search login configuration:
+
+grep UMASK /etc/login.defs
+
+Set configuration:
+
+UMASK 007
+
+Grade lab:
+
+lab grade perms-review
+
+Finish lab:
+
+lab finish perms-review
+
+============================================================
+21. FINAL CONCLUSION
+============================================================
+
+In this practical, we learned how to manage file and directory
+permissions in Linux.
+
+We created a shared directory named /home/techdocs and
+assigned its group ownership to techdocs.
+
+Initially, group members could not create files because
+the group lacked write permission.
+
+We then applied chmod 2770 to enable SETGID and provide
+read, write and execute permissions to the owner and group.
+
+After enabling SETGID:
+
+- tech1 could create files.
+- tech2 could access tech1's files.
+- Newly created files inherited the techdocs group.
+- database1 could not access the shared directory.
+
+Finally, we modified the UMASK setting in /etc/login.defs
+to 007 so that newly created files and directories would
+not grant permissions to other users under the expected
+login configuration.
+
+MAIN CONCEPTS LEARNED:
+
+1. Linux file permissions.
+2. User, Group and Other.
+3. chmod and chown.
+4. Primary and supplementary groups.
+5. SETGID special permission.
+6. Collaborative directory management.
+7. UMASK.
+8. /etc/login.defs.
+9. Access control and security.
+
+END OF PRACTICAL
+============================================================

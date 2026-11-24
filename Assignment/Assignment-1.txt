@@ -1,0 +1,13 @@
+lab start cli-review   # Prepares the lab environment and required resources.
+date                   # Displays the current system date and time.
+date +%R               # Shows the current time in 24-hour clock format (HH:MM).
+file zcat              # Identifies the file type of zcat.
+wc zcat                # Shows line, word, and byte counts of zcat.
+head zcat              # Displays the first 10 lines of zcat.
+tail zcat              # Displays the last 10 lines of zcat.
+!!                     # Repeats and executes the previous command.
+tail -n 20 zcat        # Displays the last 20 lines of zcat.
+history                # Lists command history with entry numbers.
+!2                     # Re-runs command 2 from history (adjust number to match your output).
+lab grade cli-review   # Grades your work and reports any failures.
+lab finish cli-review  # Cleans up and completes the lab exercise.

@@ -1,0 +1,17 @@
+lab start ssh-review                 # Prepares the lab environment and required resources on workstation.
+ssh student@servera                  # Logs into servera as student from workstation.
+su - production1                     # Switches to production1 login shell on servera (password: redhat).
+ssh-keygen                           # Generates an SSH key pair for production1 on servera.
+ssh-copy-id production1@serverb      # Copies production1's public key to serverb (password: redhat).
+ssh production1@serverb              # Verifies key-based SSH login from servera to serverb as production1.
+su -                                 # Switches to root login shell on serverb (password: redhat).
+systemctl reload sshd.service        # Reloads sshd on serverb after setting uncommented "PermitRootLogin no" in /etc/ssh/sshd_config.
+ssh production1@servera              # Logs into servera as production1 from a second workstation terminal.
+ssh root@serverb                     # Tests that direct SSH login as root to serverb is blocked.
+systemctl reload sshd                # Reloads sshd on serverb after setting uncommented "PasswordAuthentication no" in /etc/ssh/sshd_config.
+ssh production2@serverb              # Tests that password-only SSH login as production2 to serverb is blocked.
+cat /etc/ssh/sshd_config             # Checks /etc/ssh/sshd_config on serverb to confirm PubkeyAuthentication remains enabled by default.
+ssh production1@serverb              # Verifies key-based SSH login as production1 still succeeds after disabling password auth.
+exit                                 # Exits current shell/SSH session (repeat as needed to return to workstation as student).
+lab grade ssh-review                 # Grades the lab exercise on workstation and reports any failures.
+lab finish ssh-review                # Cleans up and completes the lab exercise on workstation.
